@@ -1237,14 +1237,14 @@ input, textarea { -webkit-user-select: text; user-select: text; }
 <!-- ⑥ STATS -->
 <div class="pg" id="pg-stats">
   <div class="sec-label">過去7日間</div>
-  <div class="ios-card"><div class="ios-card-body"><div class="wk-chart2" id="wk-chart"></div></div></div>
+  <div id="wk-chart"></div>
   <div class="sec-label">全科目 IN / OUT</div>
   <div class="ios-card">
     <div class="ios-card-body">
       <div style="display:flex;gap:14px;align-items:center">
         <div class="donut-wrap">
           <svg class="donut-svg" width="80" height="80" viewBox="0 0 80 80" id="donut-all"></svg>
-          <div class="donut-center"><div class="donut-pct" id="donut-all-pct" style="color:var(--in-c)">—</div><div class="donut-sub">IN</div></div>
+          <div class="donut-center" style="display:none"><div class="donut-pct" id="donut-all-pct" style="color:var(--in-c)"></div><div class="donut-sub" id="donut-all-sub">IN</div></div>
         </div>
         <div style="flex:1;display:flex;flex-direction:column;gap:8px">
           <div style="display:flex;align-items:center;gap:8px"><div style="width:8px;height:8px;border-radius:2px;background:var(--in-c);flex-shrink:0"></div><div style="font-size:13px;flex:1">IN</div><div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:500;color:var(--in-c)" id="leg-in-all">0h</div></div>
@@ -2046,7 +2046,7 @@ function renderUnits(){
     const uList=units.filter(u=>u.subjId===s.id);
     const done=uList.filter(u=>(u.stage||0)>=6).length;
     const hrs=h1(totMin(sess.filter(x=>(x.subjId||x.subject)===s.id)));
-    const open=uList.length>0;
+    const open=false;
     return `<div class="acc-group" style="margin:4px 0">
       <div class="acc-header ${open?'open':''}" onclick="toggleAcc(this)">
         <div class="acc-badge" style="background:${s.colorL};color:${s.color}">${s.badge}${s.sel?'★':''}</div>
@@ -2541,53 +2541,62 @@ function renderStats(){
   const wk=[];
   for(let i=6;i>=0;i--){const d=new Date(today);d.setDate(d.getDate()-i);const dstr=ds(d),io=ioOf(sess.filter(s=>s.date===dstr));wk.push({lbl:['日','月','火','水','木','金','土'][d.getDay()],in:io.in,out:io.out,tot:io.in+io.out});}
   const mx=Math.max(...wk.map(d=>d.tot),1);
-  // SVG area chart
+  // Weekly summary cards
   (()=>{
-    const W=340,H=110,pad={t:14,b:28,l:8,r:8};
-    const cw=W-pad.l-pad.r,ch=H-pad.t-pad.b;
-    const n=wk.length;
-    const xs=i=>pad.l+i*(cw/(n-1));
-    const yt=v=>pad.t+ch*(1-v/mx);
-    // IN points, OUT points
-    const inPts=wk.map((d,i)=>[xs(i),yt(d.in)]);
-    const outPts=wk.map((d,i)=>[xs(i),yt(d.out)]);
-    const mkPath=pts=>pts.map((p,i)=>(i===0?'M':'L')+p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ');
-    const mkArea=(pts,bottom)=>mkPath(pts)+` L${pts[pts.length-1][0].toFixed(1)},${bottom} L${pts[0][0].toFixed(1)},${bottom} Z`;
-    const bottom=pad.t+ch;
-    // today marker x
-    const todayX=xs(n-1);
-    // dots for today
-    const todayIn=wk[n-1].in,todayOut=wk[n-1].out,todayTot=wk[n-1].tot;
-    let svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;overflow:visible">
-      <defs>
-        <linearGradient id="gin" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--in-c)" stop-opacity=".4"/><stop offset="100%" stop-color="var(--in-c)" stop-opacity="0"/></linearGradient>
-        <linearGradient id="gout" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--out-c)" stop-opacity=".35"/><stop offset="100%" stop-color="var(--out-c)" stop-opacity="0"/></linearGradient>
-      </defs>
-      <!-- grid lines -->`;
-    [0.25,0.5,0.75,1].forEach(r=>{const y=(pad.t+ch*(1-r)).toFixed(1);svg+=`<line x1="${pad.l}" y1="${y}" x2="${W-pad.r}" y2="${y}" stroke="rgba(255,255,255,.06)" stroke-width="1"/>`;});
-    // area fills
-    svg+=`<path d="${mkArea(outPts,bottom)}" fill="url(#gout)"/>`;
-    svg+=`<path d="${mkArea(inPts,bottom)}" fill="url(#gin)"/>`;
-    // lines
-    svg+=`<path d="${mkPath(outPts)}" fill="none" stroke="var(--out-c)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`;
-    svg+=`<path d="${mkPath(inPts)}" fill="none" stroke="var(--in-c)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`;
-    // day labels + dots
-    wk.forEach((d,i)=>{
-      const x=xs(i),isToday=i===n-1;
-      const yIn=yt(d.in),yOut=yt(d.out);
-      if(d.in>0)svg+=`<circle cx="${x.toFixed(1)}" cy="${yIn.toFixed(1)}" r="${isToday?4:2.5}" fill="var(--in-c)" opacity="${isToday?1:.7}"/>`;
-      if(d.out>0)svg+=`<circle cx="${x.toFixed(1)}" cy="${yOut.toFixed(1)}" r="${isToday?4:2.5}" fill="var(--out-c)" opacity="${isToday?1:.7}"/>`;
-      svg+=`<text x="${x.toFixed(1)}" y="${H-4}" text-anchor="middle" font-size="10" fill="${isToday?'var(--blue)':'rgba(235,235,245,.4)'}" font-weight="${isToday?700:400}">${d.lbl}</text>`;
-      if(isToday&&d.tot>0)svg+=`<text x="${x.toFixed(1)}" y="${Math.min(yIn,yOut)-8}" text-anchor="middle" font-size="10" fill="var(--lbl2)" font-weight="600">${d.tot}m</text>`;
-    });
-    svg+=`</svg>`;
-    // legend
-    svg+=`<div style="display:flex;gap:14px;margin-top:8px;padding:0 4px">
-      <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--lbl3)"><div style="width:20px;height:2px;background:var(--in-c);border-radius:1px"></div>IN</div>
-      <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--lbl3)"><div style="width:20px;height:2px;background:var(--out-c);border-radius:1px"></div>OUT</div>
-      <div style="margin-left:auto;font-family:'DM Mono',monospace;font-size:11px;color:var(--lbl3)">今週合計 ${wk.reduce((a,d)=>a+d.tot,0)}分</div>
-    </div>`;
-    document.getElementById('wk-chart').innerHTML=svg;
+    const wrap = document.getElementById('wk-chart');
+    const total7 = wk.reduce((a,d)=>a+d.tot,0);
+    const io7    = wk.reduce((a,d)=>({in:a.in+d.in,out:a.out+d.out}),{in:0,out:0});
+    const days7  = wk.filter(d=>d.tot>0).length;
+    const avgDay = days7>0 ? Math.round(total7/days7) : 0;
+    const maxDay = Math.max(...wk.map(d=>d.tot));
+    const maxDayLbl = wk.find(d=>d.tot===maxDay);
+    const days=['日','月','火','水','木','金','土'];
+    const todayD = wk[wk.length-1];
+
+    // 7-day sparkline bars (compact)
+    const sparkBars = wk.map((d,i)=>{
+      const isToday = i===wk.length-1;
+      const h = d.tot>0 ? Math.max(4, Math.round(d.tot/Math.max(maxDay,1)*28)) : 3;
+      const color = isToday ? 'var(--blue)' : d.tot>0 ? 'var(--sys-bg4)' : 'var(--sys-bg3)';
+      return `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;flex:1">
+        <div style="width:100%;height:28px;display:flex;align-items:flex-end">
+          <div style="width:100%;height:${h}px;border-radius:3px 3px 0 0;background:${color}"></div>
+        </div>
+        <div style="font-size:9px;color:${isToday?'var(--blue)':'var(--lbl4)'};font-weight:${isToday?700:400}">${d.lbl}</div>
+      </div>`;
+    }).join('');
+
+    wrap.innerHTML = `
+      <!-- summary row -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:0 8px 6px">
+        <div style="background:var(--sys-bg2);border-radius:var(--r-md);padding:13px 14px">
+          <div style="font-size:11px;color:var(--lbl3);margin-bottom:4px">7日間合計</div>
+          <div style="font-family:'DM Mono',monospace;font-size:30px;font-weight:400;color:var(--lbl);line-height:1;letter-spacing:-1px">${h1(total7)}<span style="font-size:14px;color:var(--lbl3);margin-left:2px">h</span></div>
+          <div style="display:flex;gap:8px;margin-top:6px;font-size:10px">
+            <span style="color:var(--in-c)">IN ${h1(io7.in)}h</span>
+            <span style="color:var(--out-c)">OUT ${h1(io7.out)}h</span>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <div style="flex:1;background:var(--sys-bg2);border-radius:var(--r-md);padding:10px 13px">
+            <div style="font-size:10px;color:var(--lbl3);margin-bottom:3px">学習日数</div>
+            <div style="font-family:'DM Mono',monospace;font-size:24px;font-weight:400;color:var(--lbl);line-height:1">${days7}<span style="font-size:12px;color:var(--lbl3);margin-left:2px">日</span></div>
+          </div>
+          <div style="flex:1;background:var(--sys-bg2);border-radius:var(--r-md);padding:10px 13px">
+            <div style="font-size:10px;color:var(--lbl3);margin-bottom:3px">1日平均</div>
+            <div style="font-family:'DM Mono',monospace;font-size:24px;font-weight:400;color:var(--lbl);line-height:1">${avgDay}<span style="font-size:12px;color:var(--lbl3);margin-left:2px">分</span></div>
+          </div>
+        </div>
+      </div>
+      <!-- sparkline -->
+      <div style="background:var(--sys-bg2);border-radius:var(--r-md);padding:12px 12px 8px;margin:0 8px">
+        <div style="font-size:10px;color:var(--lbl3);margin-bottom:8px">日別推移</div>
+        <div style="display:flex;gap:4px;align-items:flex-end">${sparkBars}</div>
+        <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:10px;color:var(--lbl3)">
+          <span>今日 <span style="color:var(--blue);font-weight:700;font-family:'DM Mono',monospace">${todayD.tot}分</span></span>
+          ${maxDay>0?`<span>最大 <span style="color:var(--lbl2);font-weight:700;font-family:'DM Mono',monospace">${maxDay}分</span>（${maxDayLbl?.lbl}）</span>`:''}
+        </div>
+      </div>`;
   })();
 
   const allIO=ioOf(sess),allT=allIO.in+allIO.out,inPct=allT>0?Math.round(allIO.in/allT*100):null;
