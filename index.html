@@ -198,16 +198,16 @@ body {
   letter-spacing: -.3px; flex: 1; text-align: center;
 }
 .ios-nav-large {
-  padding-top: calc(var(--sat) + 2px);
-  padding-bottom: 3px;
+  padding-top: calc(var(--sat) + 0px);
+  padding-bottom: 1px;
 }
 .ios-nav-large .ios-nav-large-title {
-  font-size: 17px; font-weight: 700; color: var(--lbl);
+  font-size: 19px; font-weight: 700; color: var(--lbl);
   letter-spacing: -.3px; line-height: 1.1;
-  padding: 1px 0;
+  padding: 0;
 }
 .ios-nav-large .ios-nav-large-sub {
-  font-size: 10px; color: var(--lbl3); letter-spacing: .2px; margin-top: 0;
+  font-size: 9px; color: var(--lbl3); letter-spacing: .2px; margin-top: 0;
   font-family: 'DM Mono', monospace;
 }
 .nav-btn {
@@ -238,7 +238,7 @@ body {
   box-shadow: 0 calc(var(--sab)) 0 0 rgba(28,28,30,1);
 }
 .tab-item {
-  flex: 1; padding: 8px 2px 4px;
+  flex: 1; padding: 7px 2px 3px;
   display: flex; flex-direction: column; align-items: center; gap: 2px;
   border: none; background: none; cursor: pointer;
   color: var(--lbl3); font-size: 9px;
@@ -248,8 +248,8 @@ body {
   min-height: 46px;
 }
 .tab-item.on { color: var(--blue); }
-.tab-item svg { width: 20px; height: 20px; transition: transform .2s cubic-bezier(.34,1.5,.64,1); }
-.tab-item.on svg { transform: scale(1.08); }
+.tab-item svg { width: 26px; height: 26px; transition: transform .2s cubic-bezier(.34,1.5,.64,1); }
+.tab-item.on svg { transform: scale(1.1); }
 .tab-bdg {
   position: absolute; top: 6px; right: calc(50% - 18px);
   background: var(--red); color: #fff;
@@ -399,6 +399,8 @@ body {
   padding-bottom: 2px;
 }
 .activity-row::-webkit-scrollbar { display: none; }
+.unit-row2 { transition: border-top .1s; }
+.unit-sort-list { min-height: 10px; }
 .activity-ring {
   flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 5px;
   width: 60px;
@@ -1046,8 +1048,8 @@ input, textarea { -webkit-user-select: text; user-select: text; }
     <div style="min-width:44px"></div>
     <div class="ios-nav-title" id="nav-title" style="display:none">CPA Study</div>
     <div style="min-width:44px;display:flex;justify-content:flex-end">
-      <button class="nav-btn" onclick="openLog()">
-        <div class="nav-btn-icon" style="background:var(--blue)"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#fff" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+      <button class="nav-btn" onclick="openLog()" style="margin-top:6px">
+        <div class="nav-btn-icon" style="background:var(--blue);width:38px;height:38px;border-radius:50%"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
       </button>
     </div>
   </div>
@@ -1506,13 +1508,19 @@ input, textarea { -webkit-user-select: text; user-select: text; }
           <div class="fc-flip-face front">
             <div class="fc-face-tag">Q U E S T I O N</div>
             <div class="fc-face-text" id="fc-front-text">読み込み中…</div>
-            <div class="fc-tap-hint">タップして答えを見る</div>
+            <div class="fc-tap-hint" id="fc-tap-hint">タップして答えを見る</div>
           </div>
           <div class="fc-flip-face back">
             <div class="fc-face-tag">A N S W E R</div>
             <div class="fc-face-text" id="fc-back-text"></div>
           </div>
         </div>
+      </div>
+      <!-- swipe hint -->
+      <div style="display:flex;justify-content:space-between;padding:0 4px;font-size:10px;color:var(--lbl4)">
+        <span>← 後回し</span>
+        <span>タップで表裏切替</span>
+        <span>→ 次へ</span>
       </div>
       <div id="fc-rating-wrap" style="display:none">
         <div style="font-size:12px;color:var(--lbl3);text-align:center;margin-bottom:10px">定着度を評価</div>
@@ -2067,19 +2075,22 @@ function renderUnits(){
         <div class="acc-badge" style="background:${s.colorL};color:${s.color}">${s.badge}${s.sel?'★':''}</div>
         <div class="acc-info">
           <div class="acc-title" style="color:${s.color}">${s.name} <span style="font-size:11px;color:var(--lbl4);font-weight:400">${s.exam==='tanto'?'短答':'論文'}</span></div>
-          <div class="acc-sub">${uList.length}単元 · ${done}定着 · ${hrs}h</div>
+          <div class="acc-sub" id="acc-sub-${s.id}">${uList.length}単元 · ${done}定着 · ${hrs}h</div>
         </div>
         <div class="acc-right">${hrs}h</div>
         <div class="acc-chevron">›</div>
       </div>
       <div class="acc-body ${open?'open':''}" id="acc-body-${s.id}">
-        ${uList.map(u=>unitRowHTML2(u)).join('')}
+        <div class="unit-sort-list" id="usort-${s.id}" data-subj="${s.id}">
+          ${uList.map(u=>unitRowHTML2(u)).join('')}
+        </div>
         <div class="add-unit-btn-row">
           <button class="btn2 btn2-teal btn2-sm" onclick="openUnitSheet('${s.id}')">＋ 単元を追加</button>
         </div>
       </div>
     </div>`;
   }).join('');
+  document.querySelectorAll('.unit-sort-list').forEach(initUnitSort);
 }
 
 function unitRowHTML2(u){
@@ -2087,7 +2098,8 @@ function unitRowHTML2(u){
   const due=u.nextDate&&u.nextDate<=today&&stage<6;
   const nextLabel=stage>=6?'定着完了':u.nextDate?`次: ${fmtDs(u.nextDate)}`:'-';
   const min=totMin(sess.filter(x=>x.unitId==u.id));
-  return `<div class="unit-row2">
+  return `<div class="unit-row2" data-uid="${u.id}" draggable="true">
+    <div style="padding:0 8px 0 4px;color:var(--lbl4);cursor:grab;font-size:18px;flex-shrink:0;touch-action:none;line-height:1">⠿</div>
     <div class="unit-stage-dot" style="background:${SCOL[stage]}"></div>
     <div class="unit-row-info2">
       <div class="unit-row-name2">${u.name}</div>
@@ -2102,6 +2114,96 @@ function unitRowHTML2(u){
       <button class="btn2-xs" style="background:var(--sys-bg3);color:var(--lbl2);border:none;border-radius:6px;padding:5px 9px;font-size:12px;cursor:pointer" onclick="openUnitEdit('${u.id}')">編集</button>
     </div>
   </div>`;
+}
+
+/* ── DRAG-AND-DROP SORT ── */
+function initUnitSort(list){
+  let dragging=null,over=null,touchDragging=null,touchClone=null;
+
+  list.addEventListener('dragstart',e=>{
+    dragging=e.target.closest('.unit-row2');
+    if(!dragging)return;
+    dragging.style.opacity='.4';
+    e.dataTransfer.effectAllowed='move';
+  });
+  list.addEventListener('dragend',()=>{
+    if(dragging)dragging.style.opacity='';
+    dragging=null;over=null;
+    list.querySelectorAll('.unit-row2').forEach(r=>r.style.borderTop='');
+  });
+  list.addEventListener('dragover',e=>{
+    e.preventDefault();
+    const target=e.target.closest('.unit-row2');
+    if(!target||target===dragging)return;
+    list.querySelectorAll('.unit-row2').forEach(r=>r.style.borderTop='');
+    const rect=target.getBoundingClientRect();
+    const after=e.clientY>rect.top+rect.height/2;
+    if(!after)target.style.borderTop='2px solid var(--blue)';
+    else{const next=target.nextElementSibling;if(next&&next.classList.contains('unit-row2'))next.style.borderTop='2px solid var(--blue)';}
+    over=target;
+  });
+  list.addEventListener('drop',e=>{
+    e.preventDefault();
+    list.querySelectorAll('.unit-row2').forEach(r=>r.style.borderTop='');
+    const target=e.target.closest('.unit-row2');
+    if(!target||!dragging||target===dragging)return;
+    const rect=target.getBoundingClientRect();
+    const after=e.clientY>rect.top+rect.height/2;
+    list.insertBefore(dragging,after?target.nextSibling:target);
+    commitUnitOrder(list);
+  });
+
+  // iOS touch sort
+  list.addEventListener('touchstart',e=>{
+    const handle=e.target.closest('[style*="grab"]');
+    if(!handle)return;
+    touchDragging=handle.closest('.unit-row2');
+    if(!touchDragging)return;
+    touchDragging.style.opacity='.45';
+    const r=touchDragging.getBoundingClientRect();
+    touchClone=touchDragging.cloneNode(true);
+    touchClone.style.cssText=`position:fixed;left:${r.left}px;top:${r.top}px;width:${r.width}px;opacity:.85;z-index:999;pointer-events:none;background:var(--sys-bg2);border-radius:var(--r-md);box-shadow:0 8px 24px rgba(0,0,0,.4);`;
+    document.body.appendChild(touchClone);
+    e.preventDefault();
+  },{passive:false});
+
+  list.addEventListener('touchmove',e=>{
+    if(!touchDragging||!touchClone)return;
+    e.preventDefault();
+    const t=e.touches[0];
+    touchClone.style.top=(t.clientY-touchDragging.offsetHeight/2)+'px';
+    touchClone.style.display='none';
+    const el=document.elementFromPoint(t.clientX,t.clientY);
+    touchClone.style.display='';
+    const target=el?.closest('.unit-row2');
+    if(target&&target!==touchDragging){
+      list.querySelectorAll('.unit-row2').forEach(r=>r.style.borderTop='');
+      const rect=target.getBoundingClientRect();
+      const after=t.clientY>rect.top+rect.height/2;
+      if(!after)target.style.borderTop='2px solid var(--blue)';
+      list.insertBefore(touchDragging,after?target.nextSibling:target);
+    }
+  },{passive:false});
+
+  list.addEventListener('touchend',()=>{
+    if(!touchDragging)return;
+    touchDragging.style.opacity='';
+    if(touchClone){touchClone.remove();touchClone=null;}
+    list.querySelectorAll('.unit-row2').forEach(r=>r.style.borderTop='');
+    commitUnitOrder(list);
+    touchDragging=null;
+  },{passive:true});
+}
+
+function commitUnitOrder(list){
+  const subjId=list.dataset.subj;
+  const newOrder=[...list.querySelectorAll('.unit-row2')].map(r=>r.dataset.uid);
+  const others=units.filter(u=>u.subjId!==subjId);
+  const reordered=newOrder.map(id=>units.find(u=>u.id==id)).filter(Boolean);
+  units=[...others,...reordered];
+  saveAll();
+  const sub=document.getElementById('acc-sub-'+subjId);
+  if(sub){const done=reordered.filter(u=>(u.stage||0)>=6).length;const hrs=h1(totMin(sess.filter(x=>x.subjId===subjId)));sub.textContent=`${reordered.length}単元 · ${done}定着 · ${hrs}h`;}
 }
 
 function toggleAcc(hdr){
@@ -2232,7 +2334,6 @@ function renderFCCardList(subjId){
   const s=sub(subjId);
   const sc=cards.filter(c=>c.subjId===subjId);
   const wrap=document.getElementById('fc-deck-list');
-  // back button header
   let html=`<div style="display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:.5px solid var(--sys-sep2)">
     <button onclick="fcViewMode='decks';renderFC()" style="background:none;border:none;color:var(--blue);font-size:15px;cursor:pointer;padding:4px;font-family:'Noto Sans JP',sans-serif">‹ 戻る</button>
     <div style="flex:1;font-size:15px;font-weight:700;color:var(--lbl)">${s?s.name:''}</div>
@@ -2242,12 +2343,14 @@ function renderFCCardList(subjId){
     html+='<div class="empty2"><div class="empty2-ic">🃏</div><div class="empty2-tx">このデッキにはカードがありません</div></div>';
     wrap.innerHTML=html; return;
   }
+  html+=`<div class="fc-sort-list" id="fcsort-${subjId}" data-subj="${subjId}">`;
   sc.forEach(c=>{
     const stage=c.stage||0;
     const today=ds(new Date());
     const isDue=c.nextDate&&c.nextDate<=today&&stage<6;
     const u2=unit(c.unitId);
-    html+=`<div style="display:flex;align-items:flex-start;gap:10px;padding:11px 14px;border-bottom:.5px solid var(--sys-sep2)">
+    html+=`<div class="fc-sort-row" data-cid="${c.id}" draggable="true" style="display:flex;align-items:flex-start;gap:10px;padding:11px 14px;border-bottom:.5px solid var(--sys-sep2);background:var(--sys-bg2);">
+      <div style="padding:2px 6px 0 0;color:var(--lbl4);cursor:grab;font-size:18px;flex-shrink:0;touch-action:none;line-height:1.4">⠿</div>
       <div style="flex:1;min-width:0">
         <div style="font-size:13px;font-weight:500;color:var(--lbl);margin-bottom:3px;line-height:1.4">${c.front}</div>
         <div style="font-size:11px;color:var(--lbl3);margin-bottom:4px;line-height:1.4">${c.back.length>50?c.back.substring(0,50)+'…':c.back}</div>
@@ -2260,7 +2363,96 @@ function renderFCCardList(subjId){
       <button onclick="openFCEdit('${c.id}')" style="background:var(--sys-bg3);color:var(--lbl2);border:none;border-radius:var(--r-sm);padding:7px 10px;font-size:12px;cursor:pointer;white-space:nowrap;flex-shrink:0;font-family:'Noto Sans JP',sans-serif">編集</button>
     </div>`;
   });
+  html+='</div>';
   wrap.innerHTML=html;
+  const sortList=document.getElementById('fcsort-'+subjId);
+  if(sortList) initFCSort(sortList);
+}
+
+function initFCSort(list){
+  let dragging=null,touchDragging=null,touchClone=null;
+
+  list.addEventListener('dragstart',e=>{
+    dragging=e.target.closest('.fc-sort-row');
+    if(!dragging)return;
+    dragging.style.opacity='.4';
+    e.dataTransfer.effectAllowed='move';
+  });
+  list.addEventListener('dragend',()=>{
+    if(dragging)dragging.style.opacity='';
+    dragging=null;
+    list.querySelectorAll('.fc-sort-row').forEach(r=>r.style.borderTop='');
+  });
+  list.addEventListener('dragover',e=>{
+    e.preventDefault();
+    const target=e.target.closest('.fc-sort-row');
+    if(!target||target===dragging)return;
+    list.querySelectorAll('.fc-sort-row').forEach(r=>r.style.borderTop='');
+    const rect=target.getBoundingClientRect();
+    const after=e.clientY>rect.top+rect.height/2;
+    if(!after)target.style.borderTop='2px solid var(--blue)';
+    else{const n=target.nextElementSibling;if(n&&n.classList.contains('fc-sort-row'))n.style.borderTop='2px solid var(--blue)';}
+  });
+  list.addEventListener('drop',e=>{
+    e.preventDefault();
+    list.querySelectorAll('.fc-sort-row').forEach(r=>r.style.borderTop='');
+    const target=e.target.closest('.fc-sort-row');
+    if(!target||!dragging||target===dragging)return;
+    const rect=target.getBoundingClientRect();
+    const after=e.clientY>rect.top+rect.height/2;
+    list.insertBefore(dragging,after?target.nextSibling:target);
+    commitFCOrder(list);
+  });
+
+  list.addEventListener('touchstart',e=>{
+    const handle=e.target.closest('[style*="grab"]');
+    if(!handle)return;
+    touchDragging=handle.closest('.fc-sort-row');
+    if(!touchDragging)return;
+    touchDragging.style.opacity='.45';
+    const r=touchDragging.getBoundingClientRect();
+    touchClone=touchDragging.cloneNode(true);
+    touchClone.style.cssText=`position:fixed;left:${r.left}px;top:${r.top}px;width:${r.width}px;opacity:.85;z-index:999;pointer-events:none;background:var(--sys-bg2);border-radius:var(--r-md);box-shadow:0 8px 24px rgba(0,0,0,.4);`;
+    document.body.appendChild(touchClone);
+    e.preventDefault();
+  },{passive:false});
+
+  list.addEventListener('touchmove',e=>{
+    if(!touchDragging||!touchClone)return;
+    e.preventDefault();
+    const t=e.touches[0];
+    touchClone.style.top=(t.clientY-touchDragging.offsetHeight/2)+'px';
+    touchClone.style.display='none';
+    const el=document.elementFromPoint(t.clientX,t.clientY);
+    touchClone.style.display='';
+    const target=el?.closest('.fc-sort-row');
+    if(target&&target!==touchDragging){
+      list.querySelectorAll('.fc-sort-row').forEach(r=>r.style.borderTop='');
+      const rect=target.getBoundingClientRect();
+      const after=t.clientY>rect.top+rect.height/2;
+      if(!after)target.style.borderTop='2px solid var(--blue)';
+      list.insertBefore(touchDragging,after?target.nextSibling:target);
+    }
+  },{passive:false});
+
+  list.addEventListener('touchend',()=>{
+    if(!touchDragging)return;
+    touchDragging.style.opacity='';
+    if(touchClone){touchClone.remove();touchClone=null;}
+    list.querySelectorAll('.fc-sort-row').forEach(r=>r.style.borderTop='');
+    commitFCOrder(list);
+    touchDragging=null;
+  },{passive:true});
+}
+
+function commitFCOrder(list){
+  const subjId=list.dataset.subj;
+  const newOrder=[...list.querySelectorAll('.fc-sort-row')].map(r=>r.dataset.cid);
+  const others=cards.filter(c=>c.subjId!==subjId);
+  const reordered=newOrder.map(id=>cards.find(c=>c.id==id)).filter(Boolean);
+  cards=[...others,...reordered];
+  saveAll();
+  toast('✅ 並び替えを保存しました');
 }
 
 function startFCStudy(subjId){
@@ -2274,23 +2466,32 @@ function startFCStudy(subjId){
     if(!pool.length)pool=cards.filter(c=>c.subjId===subjId);
   }
   if(!pool.length){toast('このデッキにはカードがありません');return;}
+  // シャッフル
+  for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
   fcQueue=[...pool];fcIdx=0;fcFlipped=false;fcResults=[];
   showFCCard();
   document.getElementById('fc-study-ov').classList.add('open');
   const s2=sub(subjId);
   document.getElementById('fc-study-title').textContent=(s2?s2.name:'カード')+'学習';
+  initFCSwipe();
 }
 function showFCCard(){
   if(fcIdx>=fcQueue.length){showFCComplete();return;}
   const c=fcQueue[fcIdx];fcFlipped=false;
-  document.getElementById('fc-card').classList.remove('flipped');
+  const card=document.getElementById('fc-card');
+  card.classList.remove('flipped');
+  card.style.transform='';card.style.opacity='';card.style.transition='';
   document.getElementById('fc-front-text').textContent=c.front;
   document.getElementById('fc-back-text').textContent=c.back;
   document.getElementById('fc-rating-wrap').style.display='none';
   document.getElementById('fc-complete-wrap').style.display='none';
-  document.getElementById('fc-card').style.display='';
+  card.style.display='';
+  const remaining=fcQueue.length-fcIdx;
   document.getElementById('fc-study-prog').textContent=`${fcIdx+1} / ${fcQueue.length}`;
   document.getElementById('fc-prog-fill').style.width=`${(fcIdx/fcQueue.length)*100}%`;
+  // hint: show "後回し中" label if card was deferred
+  const hint=document.getElementById('fc-tap-hint');
+  if(hint)hint.textContent=c._deferred?'（後回し）タップして答えを見る':'タップして答えを見る';
 }
 function flipCard(){
   if(fcIdx>=fcQueue.length)return;
@@ -2316,6 +2517,64 @@ function showFCComplete(){
   refreshHome();renderFC();
 }
 function closeFCStudy(){document.getElementById('fc-study-ov').classList.remove('open');}
+
+/* ── FC SWIPE ── */
+function initFCSwipe(){
+  const card=document.getElementById('fc-card');
+  if(!card||card._swipeInit)return;
+  card._swipeInit=true;
+  let sx=0,sy=0,sTime=0;
+
+  card.addEventListener('touchstart',e=>{
+    sx=e.touches[0].clientX;sy=e.touches[0].clientY;sTime=Date.now();
+  },{passive:true});
+
+  card.addEventListener('touchmove',e=>{
+    if(fcFlipped)return; // 裏面表示中はスワイプ無効
+    const dx=e.touches[0].clientX-sx;
+    const dy=e.touches[0].clientY-sy;
+    if(Math.abs(dx)<Math.abs(dy))return;
+    e.preventDefault();
+    card.style.transition='none';
+    card.style.transform=`translateX(${dx}px) rotate(${dx*0.03}deg)`;
+    card.style.opacity=String(1-Math.abs(dx)/300);
+  },{passive:false});
+
+  card.addEventListener('touchend',e=>{
+    if(fcFlipped){card.style.transform='';card.style.opacity='';return;}
+    const dx=e.changedTouches[0].clientX-sx;
+    const dy=e.changedTouches[0].clientY-sy;
+    const dt=Date.now()-sTime;
+    if(Math.abs(dx)<Math.abs(dy)||dt>400||Math.abs(dx)<50){
+      // スワイプ不成立 → 元に戻す
+      card.style.transition='transform .25s,opacity .25s';
+      card.style.transform='';card.style.opacity='';
+      return;
+    }
+    if(dx<-50){
+      // 左スワイプ → 後回し
+      card.style.transition='transform .25s,opacity .25s';
+      card.style.transform='translateX(-120%) rotate(-8deg)';
+      card.style.opacity='0';
+      setTimeout(()=>deferCard(),220);
+    } else if(dx>50){
+      // 右スワイプ → 次へ（スキップ）
+      card.style.transition='transform .25s,opacity .25s';
+      card.style.transform='translateX(120%) rotate(8deg)';
+      card.style.opacity='0';
+      setTimeout(()=>{fcResults.push({id:fcQueue[fcIdx].id,rating:-1});fcIdx++;showFCCard();},220);
+    }
+  },{passive:true});
+}
+
+function deferCard(){
+  const c={...fcQueue[fcIdx],_deferred:true};
+  fcQueue.splice(fcIdx,1);  // 現在の位置から削除
+  fcQueue.push(c);          // 末尾に追加
+  // fcIdxは変えない（削除で次のカードが来る）
+  toast('⏭ 後回しにしました');
+  showFCCard();
+}
 
 function openFCSheet(subjId){
   editingFCId=null;
@@ -2565,17 +2824,44 @@ function renderStats(){
     const avgDay = days7>0 ? Math.round(total7/days7) : 0;
     const maxDay = Math.max(...wk.map(d=>d.tot));
     const maxDayLbl = wk.find(d=>d.tot===maxDay);
-    const days=['日','月','火','水','木','金','土'];
     const todayD = wk[wk.length-1];
 
-    // 7-day sparkline bars (compact)
+    // 先週7日間
+    const prevWk=[];
+    for(let i=13;i>=7;i--){const d=new Date(today);d.setDate(d.getDate()-i);const dstr=ds(d),io=ioOf(sess.filter(s=>s.date===dstr));prevWk.push({in:io.in,out:io.out,tot:io.in+io.out});}
+    const prevTotal7 = prevWk.reduce((a,d)=>a+d.tot,0);
+    const prevDays7  = prevWk.filter(d=>d.tot>0).length;
+    const prevAvg    = prevDays7>0 ? Math.round(prevTotal7/prevDays7) : 0;
+
+    // 比較表示ヘルパー
+    const cmp=(cur,prev)=>{
+      if(prev===0&&cur===0) return '';
+      const diff = cur-prev;
+      if(diff===0) return `<span style="color:var(--lbl3);font-size:10px">±0</span>`;
+      const arrow = diff>0 ? '↑' : '↓';
+      const color = diff>0 ? 'var(--green)' : 'var(--red)';
+      const val   = Math.abs(diff);
+      return `<span style="color:${color};font-size:10px;font-weight:600">${arrow}${val>60?h1(val*1)+'h':val+'分'}</span>`;
+    };
+    const cmpPct=(cur,prev)=>{
+      if(prev===0) return cur>0?`<span style="color:var(--green);font-size:10px;font-weight:600">↑NEW</span>`:'';
+      const pct=Math.round((cur-prev)/prev*100);
+      if(pct===0) return `<span style="color:var(--lbl3);font-size:10px">±0%</span>`;
+      const color=pct>0?'var(--green)':'var(--red)';
+      return `<span style="color:${color};font-size:10px;font-weight:600">${pct>0?'↑':'↓'}${Math.abs(pct)}%</span>`;
+    };
+
+    // 7-day sparkline bars（今週＋先週を薄く並べる）
+    const allMax=Math.max(...wk.map(d=>d.tot),...prevWk.map(d=>d.tot),1);
     const sparkBars = wk.map((d,i)=>{
       const isToday = i===wk.length-1;
-      const h = d.tot>0 ? Math.max(4, Math.round(d.tot/Math.max(maxDay,1)*28)) : 3;
+      const h  = d.tot>0     ? Math.max(4, Math.round(d.tot/allMax*28))          : 3;
+      const hp = prevWk[i]?.tot>0 ? Math.max(3, Math.round(prevWk[i].tot/allMax*26)) : 0;
       const color = isToday ? 'var(--blue)' : d.tot>0 ? 'var(--sys-bg4)' : 'var(--sys-bg3)';
       return `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;flex:1">
-        <div style="width:100%;height:28px;display:flex;align-items:flex-end">
-          <div style="width:100%;height:${h}px;border-radius:3px 3px 0 0;background:${color}"></div>
+        <div style="width:100%;height:28px;display:flex;align-items:flex-end;gap:1px">
+          ${hp>0?`<div style="flex:1;height:${hp}px;border-radius:2px 2px 0 0;background:var(--sys-bg4);opacity:.4"></div>`:'<div style="flex:1"></div>'}
+          <div style="flex:1;height:${h}px;border-radius:2px 2px 0 0;background:${color}"></div>
         </div>
         <div style="font-size:9px;color:${isToday?'var(--blue)':'var(--lbl4)'};font-weight:${isToday?700:400}">${d.lbl}</div>
       </div>`;
@@ -2586,26 +2872,44 @@ function renderStats(){
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:0 8px 6px">
         <div style="background:var(--sys-bg2);border-radius:var(--r-md);padding:13px 14px">
           <div style="font-size:11px;color:var(--lbl3);margin-bottom:4px">7日間合計</div>
-          <div style="font-family:'DM Mono',monospace;font-size:30px;font-weight:400;color:var(--lbl);line-height:1;letter-spacing:-1px">${h1(total7)}<span style="font-size:14px;color:var(--lbl3);margin-left:2px">h</span></div>
-          <div style="display:flex;gap:8px;margin-top:6px;font-size:10px">
+          <div style="display:flex;align-items:baseline;gap:6px">
+            <div style="font-family:'DM Mono',monospace;font-size:30px;font-weight:400;color:var(--lbl);line-height:1;letter-spacing:-1px">${h1(total7)}<span style="font-size:14px;color:var(--lbl3);margin-left:2px">h</span></div>
+            ${cmpPct(total7,prevTotal7)}
+          </div>
+          <div style="display:flex;gap:8px;margin-top:5px;font-size:10px">
             <span style="color:var(--in-c)">IN ${h1(io7.in)}h</span>
             <span style="color:var(--out-c)">OUT ${h1(io7.out)}h</span>
           </div>
+          <div style="font-size:10px;color:var(--lbl4);margin-top:3px">先週 ${h1(prevTotal7)}h</div>
         </div>
         <div style="display:flex;flex-direction:column;gap:6px">
           <div style="flex:1;background:var(--sys-bg2);border-radius:var(--r-md);padding:10px 13px">
             <div style="font-size:10px;color:var(--lbl3);margin-bottom:3px">学習日数</div>
-            <div style="font-family:'DM Mono',monospace;font-size:24px;font-weight:400;color:var(--lbl);line-height:1">${days7}<span style="font-size:12px;color:var(--lbl3);margin-left:2px">日</span></div>
+            <div style="display:flex;align-items:baseline;gap:5px">
+              <div style="font-family:'DM Mono',monospace;font-size:24px;font-weight:400;color:var(--lbl);line-height:1">${days7}<span style="font-size:12px;color:var(--lbl3);margin-left:2px">日</span></div>
+              ${cmp(days7,prevDays7)}
+            </div>
+            <div style="font-size:10px;color:var(--lbl4);margin-top:2px">先週 ${prevDays7}日</div>
           </div>
           <div style="flex:1;background:var(--sys-bg2);border-radius:var(--r-md);padding:10px 13px">
             <div style="font-size:10px;color:var(--lbl3);margin-bottom:3px">1日平均</div>
-            <div style="font-family:'DM Mono',monospace;font-size:24px;font-weight:400;color:var(--lbl);line-height:1">${avgDay}<span style="font-size:12px;color:var(--lbl3);margin-left:2px">分</span></div>
+            <div style="display:flex;align-items:baseline;gap:5px">
+              <div style="font-family:'DM Mono',monospace;font-size:24px;font-weight:400;color:var(--lbl);line-height:1">${avgDay}<span style="font-size:12px;color:var(--lbl3);margin-left:2px">分</span></div>
+              ${cmp(avgDay,prevAvg)}
+            </div>
+            <div style="font-size:10px;color:var(--lbl4);margin-top:2px">先週 ${prevAvg}分</div>
           </div>
         </div>
       </div>
       <!-- sparkline -->
       <div style="background:var(--sys-bg2);border-radius:var(--r-md);padding:12px 12px 8px;margin:0 8px">
-        <div style="font-size:10px;color:var(--lbl3);margin-bottom:8px">日別推移</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <div style="font-size:10px;color:var(--lbl3)">日別推移</div>
+          <div style="display:flex;gap:10px;font-size:9px;color:var(--lbl3)">
+            <span style="display:flex;align-items:center;gap:3px"><span style="width:8px;height:8px;border-radius:2px;background:var(--sys-bg4);opacity:.5;display:inline-block"></span>先週</span>
+            <span style="display:flex;align-items:center;gap:3px"><span style="width:8px;height:8px;border-radius:2px;background:var(--sys-bg4);display:inline-block"></span>今週</span>
+          </div>
+        </div>
         <div style="display:flex;gap:4px;align-items:flex-end">${sparkBars}</div>
         <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:10px;color:var(--lbl3)">
           <span>今日 <span style="color:var(--blue);font-weight:700;font-family:'DM Mono',monospace">${todayD.tot}分</span></span>
