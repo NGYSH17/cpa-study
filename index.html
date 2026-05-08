@@ -585,6 +585,7 @@ body {
 .t-io-btn.on-in  { background: var(--teal-bg); border-color: var(--teal); color: var(--teal); }
 .t-io-btn.on-out { background: var(--orange-bg); border-color: var(--orange); color: var(--orange); }
 .t-btns-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 0 16px; }
+.t-btns-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin: 0 16px; }
 .prob-counter-row {
   display: flex; align-items: center; justify-content: center; gap: 20px;
   margin: 12px 16px;
@@ -1134,9 +1135,9 @@ input, textarea { -webkit-user-select: text; user-select: text; }
   <div class="sec-label">タイマー</div>
   <div class="ios-card" style="margin-bottom:0">
     <div class="timer-mode-seg">
-      <button class="tseg-btn on" id="tm-study" onclick="setTMode('study')">⏱ 学習</button>
-      <button class="tseg-btn" id="tm-pomo" onclick="setTMode('pomo')">🍅 ポモドーロ</button>
-      <button class="tseg-btn" id="tm-prob" onclick="setTMode('prob')">📝 問題演習</button>
+      <button class="tseg-btn on" id="tm-study" onclick="setTMode(&apos;study&apos;)">⏱ 学習</button>
+      <button class="tseg-btn" id="tm-pomo" onclick="setTMode(&apos;pomo&apos;)">🍅 ポモドーロ</button>
+      <button class="tseg-btn" id="tm-prob" onclick="setTMode(&apos;prob&apos;)">📝 問題演習</button>
     </div>
 
     <!-- STUDY MODE -->
@@ -1146,8 +1147,8 @@ input, textarea { -webkit-user-select: text; user-select: text; }
       <select class="t-sel" id="t-subj-sel" onchange="updateTUnitSel()"></select>
       <select class="t-sel" id="t-unit-sel" style="margin-top:0;margin-bottom:16px"></select>
       <div class="t-io-row">
-        <button class="t-io-btn" id="tio-in" onclick="setTIO('input')">📥 インプット<br><span style="font-size:10px;font-weight:400">講義・テキスト</span></button>
-        <button class="t-io-btn" id="tio-out" onclick="setTIO('output')">📤 アウトプット<br><span style="font-size:10px;font-weight:400">問題演習・答練</span></button>
+        <button class="t-io-btn" id="tio-in" onclick="setTIO(&apos;input&apos;)">📥 インプット<br><span style="font-size:10px;font-weight:400">講義・テキスト</span></button>
+        <button class="t-io-btn" id="tio-out" onclick="setTIO(&apos;output&apos;)">📤 アウトプット<br><span style="font-size:10px;font-weight:400">問題演習・答練</span></button>
       </div>
       <div class="t-btns-row" style="margin-bottom:16px">
         <button class="btn2 btn2-primary" id="t-start" onclick="tToggle()">▶ スタート</button>
@@ -1183,10 +1184,12 @@ input, textarea { -webkit-user-select: text; user-select: text; }
       </div>
       <select class="t-sel" id="prob-subj-sel" onchange="updateProbUnitSel()"></select>
       <select class="t-sel" id="prob-unit-sel" style="margin-top:0;margin-bottom:16px"></select>
-      <div class="t-btns-row" style="margin-bottom:16px">
+      <div class="t-btns-row t-btns-row-3" style="margin-bottom:16px">
         <button class="btn2 btn2-primary" id="prob-start" onclick="probToggle()">▶ スタート</button>
+        <button class="btn2 btn2-secondary" id="prob-lap" onclick="probLap()" disabled style="opacity:.4">⏱ ラップ</button>
         <button class="btn2 btn2-danger" id="prob-stop" onclick="probStop()" disabled style="opacity:.4">■ 終了</button>
       </div>
+      <div id="prob-laps" style="display:none;margin-top:8px;background:var(--sys-bg3);border-radius:var(--r-md);padding:8px 12px;max-height:140px;overflow-y:auto"></div>
     </div>
   </div>
 
@@ -1284,7 +1287,26 @@ input, textarea { -webkit-user-select: text; user-select: text; }
   </div>
 </div>
 
-<!-- ⑦ SETTINGS -->
+
+<!-- QUIZ PAGE -->
+<div class="pg" id="pg-quiz">
+  <div style="padding:10px 12px 6px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+    <select id="quiz-topic-sel" onchange="quizFilterChange()" style="flex:1;min-width:0;background:var(--sys-bg2);color:var(--lbl);border:1px solid var(--sys-bg4);border-radius:8px;padding:8px 10px;font-size:13px;font-family:sans-serif"></select>
+    <select id="quiz-diff-sel" onchange="quizFilterChange()" style="background:var(--sys-bg2);color:var(--lbl);border:1px solid var(--sys-bg4);border-radius:8px;padding:8px 10px;font-size:13px;font-family:sans-serif">
+      <option value="">全難易度</option>
+      <option value="A">A 基本</option>
+      <option value="B">B 標準</option>
+      <option value="C">C 難問</option>
+    </select>
+    <button onclick="startQuiz()" style="background:var(--blue);color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:sans-serif">▶ 開始</button>
+    <button onclick="openQuizImport()" style="background:var(--sys-bg2);color:var(--lbl2);border:1px solid var(--sys-bg4);border-radius:8px;padding:8px 12px;font-size:13px;cursor:pointer;font-family:sans-serif" title="問題をインポート">＋</button>
+  </div>
+  <div style="padding:0 12px 8px;font-size:11px;color:var(--lbl3)" id="quiz-count-lbl"></div>
+  <div id="quiz-area" style="padding:0 12px"></div>
+  <div id="quiz-result" style="display:none;padding:12px"></div>
+</div>
+
+<!-- ⑧ SETTINGS -->
 <div class="pg" id="pg-set">
   <div class="sec-label">データ同期</div>
   <div class="ios-list" style="margin:0 16px">
@@ -1304,17 +1326,34 @@ input, textarea { -webkit-user-select: text; user-select: text; }
 
   <div class="sec-label">テーマ</div>
   <div style="display:flex;gap:8px;margin:0 8px 4px">
-    <div id="theme-btn-dark" onclick="setTheme('dark')" style="flex:1;background:var(--sys-bg2);border-radius:var(--r-md);padding:14px 10px;text-align:center;cursor:pointer;border:2px solid var(--blue);transition:all .15s">
+    <div id="theme-btn-dark" onclick="setTheme(&apos;dark&apos;)" style="flex:1;background:var(--sys-bg2);border-radius:var(--r-md);padding:14px 10px;text-align:center;cursor:pointer;border:2px solid var(--blue);transition:all .15s">
       <div style="font-size:24px;margin-bottom:6px">🌙</div>
       <div style="font-size:13px;font-weight:600;color:var(--lbl)">ダーク</div>
       <div style="font-size:10px;color:var(--lbl3);margin-top:2px">現在のテーマ</div>
     </div>
-    <div id="theme-btn-cream" onclick="setTheme('cream')" style="flex:1;background:#EDEAE0;border-radius:var(--r-md);padding:14px 10px;text-align:center;cursor:pointer;border:2px solid transparent;transition:all .15s">
+    <div id="theme-btn-cream" onclick="setTheme(&apos;cream&apos;)" style="flex:1;background:#EDEAE0;border-radius:var(--r-md);padding:14px 10px;text-align:center;cursor:pointer;border:2px solid transparent;transition:all .15s">
       <div style="font-size:24px;margin-bottom:6px">☀️</div>
       <div style="font-size:13px;font-weight:600;color:#1C1814">クリーム</div>
       <div style="font-size:10px;color:rgba(28,24,20,.4);margin-top:2px">明るいテーマ</div>
     </div>
   </div>
+  <div class="sec-label">タイマー</div>
+  <div class="ios-list" style="margin:0 8px">
+    <div class="ios-list-row">
+      <div class="ios-row-icon" style="background:rgba(10,132,255,.15)">🔆</div>
+      <div class="ios-row-body">
+        <div class="ios-row-title">画面スリープ防止</div>
+        <div class="ios-row-sub">タイマー起動中に画面をオフにしない</div>
+      </div>
+      <label style="position:relative;width:51px;height:31px;flex-shrink:0">
+        <input type="checkbox" id="set-wakelock" onchange="setWakeLockPref(this.checked)" style="opacity:0;width:0;height:0;position:absolute">
+        <span id="wakelock-track" style="position:absolute;inset:0;border-radius:16px;background:var(--sys-bg4);transition:background .2s;cursor:pointer">
+          <span id="wakelock-thumb" style="position:absolute;left:3px;top:3px;width:25px;height:25px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.3);transition:transform .2s"></span>
+        </span>
+      </label>
+    </div>
+  </div>
+
   <div class="sec-label">通知</div>
   <div class="ios-list" style="margin:0 16px">
     <div class="ios-list-row">
@@ -1389,27 +1428,30 @@ input, textarea { -webkit-user-select: text; user-select: text; }
 </div><!-- /content -->
 
 <nav class="tab-bar">
-  <button class="tab-item on" onclick="goPage('home',this)">
+  <button class="tab-item on" onclick="goPage(&apos;home&apos;,this)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>ホーム
   </button>
-  <button class="tab-item" id="nav-rv" onclick="goPage('review',this)">
+  <button class="tab-item" id="nav-rv" onclick="goPage(&apos;review&apos;,this)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>復習
     <span class="tab-bdg" id="rv-nav-bdg" style="display:none"></span>
   </button>
-  <button class="tab-item" onclick="goPage('units',this)">
+  <button class="tab-item" onclick="goPage(&apos;units&apos;,this)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>単元
   </button>
-  <button class="tab-item" id="nav-fc" onclick="goPage('fc',this)">
+  <button class="tab-item" id="nav-fc" onclick="goPage(&apos;fc&apos;,this)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>カード
     <span class="tab-bdg" id="fc-nav-bdg" style="display:none"></span>
   </button>
-  <button class="tab-item" onclick="goPage('hist',this)">
+  <button class="tab-item" onclick="goPage(&apos;hist&apos;,this)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>履歴
   </button>
-  <button class="tab-item" onclick="goPage('stats',this)">
+  <button class="tab-item" onclick="goPage(&apos;stats&apos;,this)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>統計
   </button>
-  <button class="tab-item" onclick="goPage('set',this)">
+  <button class="tab-item" onclick="goPage(&apos;quiz&apos;,this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>問題
+  </button>
+  <button class="tab-item" onclick="goPage(&apos;set&apos;,this)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>設定
   </button>
 </nav>
@@ -1425,8 +1467,8 @@ input, textarea { -webkit-user-select: text; user-select: text; }
     <div class="fg2">
       <label class="fl2">学習タイプ</label>
       <div class="io-seg">
-        <button class="io-seg-btn" id="pill-in" onclick="setLogIO('input')">📥 インプット<span class="io-seg-sub">講義・テキスト</span></button>
-        <button class="io-seg-btn" id="pill-out" onclick="setLogIO('output')">📤 アウトプット<span class="io-seg-sub">問題演習・答練</span></button>
+        <button class="io-seg-btn" id="pill-in" onclick="setLogIO(&apos;input&apos;)">📥 インプット<span class="io-seg-sub">講義・テキスト</span></button>
+        <button class="io-seg-btn" id="pill-out" onclick="setLogIO(&apos;output&apos;)">📤 アウトプット<span class="io-seg-sub">問題演習・答練</span></button>
       </div>
     </div>
     <div class="fg2"><label class="fl2">科目</label><select class="fs2" id="log-subj" onchange="updateLogUnitSel()"></select></div>
@@ -1481,6 +1523,14 @@ input, textarea { -webkit-user-select: text; user-select: text; }
     <input type="hidden" id="fc-edit-id">
     <div class="fg2"><label class="fl2">科目</label><select class="fs2" id="fc-subj-sel" onchange="updateFCUnitSel()"></select></div>
     <div class="fg2"><label class="fl2">単元（任意）</label><select class="fs2" id="fc-unit-sel"></select></div>
+    <div class="fg2">
+      <label class="fl2">重要度</label>
+      <div style="display:flex;gap:8px">
+        <button type="button" class="fc-pri-btn" id="fc-pri-A" onclick="setFCPri(&apos;A&apos;)" style="flex:1;padding:10px;border:2px solid var(--red);background:var(--red-bg);color:var(--red);border-radius:var(--r-md);font-size:15px;font-weight:700;cursor:pointer">A<span style="font-size:10px;display:block;font-weight:400">最重要</span></button>
+        <button type="button" class="fc-pri-btn" id="fc-pri-B" onclick="setFCPri(&apos;B&apos;)" style="flex:1;padding:10px;border:2px solid var(--sys-bg4);background:var(--sys-bg3);color:var(--lbl2);border-radius:var(--r-md);font-size:15px;font-weight:700;cursor:pointer">B<span style="font-size:10px;display:block;font-weight:400">重要</span></button>
+        <button type="button" class="fc-pri-btn" id="fc-pri-C" onclick="setFCPri(&apos;C&apos;)" style="flex:1;padding:10px;border:2px solid var(--sys-bg4);background:var(--sys-bg3);color:var(--lbl2);border-radius:var(--r-md);font-size:15px;font-weight:700;cursor:pointer">C<span style="font-size:10px;display:block;font-weight:400">参考</span></button>
+      </div>
+    </div>
     <div class="fg2"><label class="fl2">表面（問題・用語）</label><textarea class="fi2" id="fc-front" rows="3" placeholder="例：収益認識の5ステップとは？"></textarea></div>
     <div class="fg2"><label class="fl2">裏面（解答・説明）</label><textarea class="fi2" id="fc-back" rows="4" placeholder="例：①契約識別 ②履行義務識別 ③取引価格決定 ④配分 ⑤収益認識"></textarea></div>
     <div class="sheet2-btns">
@@ -1498,6 +1548,7 @@ input, textarea { -webkit-user-select: text; user-select: text; }
       <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
     </button>
     <div class="fc-nav-title" id="fc-study-title">カード学習</div>
+    <div id="fc-priority-badge" style="font-family:'DM Mono',monospace;font-size:14px;font-weight:700;min-width:20px;text-align:right"></div>
     <div class="fc-nav-prog" id="fc-study-prog">1 / 10</div>
   </div>
   <div class="fc-prog-bar"><div class="fc-prog-fill" id="fc-prog-fill" style="width:0%"></div></div>
@@ -1551,6 +1602,31 @@ input, textarea { -webkit-user-select: text; user-select: text; }
 </div>
 
 <div class="toast2" id="toast"></div>
+
+<!-- QUIZ IMPORT SHEET -->
+<div id="quiz-import-sheet" style="display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.55)" onclick="closeQuizImport()">
+  <div onclick="event.stopPropagation()" style="position:absolute;bottom:0;left:0;right:0;background:var(--sys-bg);border-radius:20px 20px 0 0;padding:20px 16px 40px;max-height:80vh;overflow-y:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div style="font-size:16px;font-weight:700;color:var(--lbl)">📥 問題インポート</div>
+      <button onclick="closeQuizImport()" style="background:var(--sys-bg3);color:var(--lbl2);border:none;border-radius:50%;width:28px;height:28px;font-size:16px;cursor:pointer;font-family:sans-serif">×</button>
+    </div>
+    <div style="font-size:12px;color:var(--lbl3);margin-bottom:12px;line-height:1.6">
+      以下のJSON形式で問題を貼り付けてください。既存の問題番号は上書きされます。
+    </div>
+    <div style="background:var(--sys-bg2);border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:10px;color:var(--lbl3);font-family:monospace;line-height:1.6">
+[{"no":1,"topic":"会社法総論","q":"問題文","ans":true,"exp":"解説","diff":"A"}]
+    </div>
+    <textarea id="quiz-import-input" placeholder='JSONを貼り付け...' style="width:100%;height:160px;background:var(--sys-bg2);color:var(--lbl);border:1px solid var(--sys-bg4);border-radius:8px;padding:10px;font-size:12px;font-family:monospace;resize:vertical;box-sizing:border-box;outline:none"></textarea>
+    <div id="quiz-import-status" style="font-size:12px;margin-top:8px;min-height:18px"></div>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button onclick="execQuizImport()" style="flex:1;background:var(--blue);color:#fff;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:700;cursor:pointer;font-family:sans-serif">インポート</button>
+      <button onclick="clearAllQuiz()" style="background:var(--red-bg);color:var(--red);border:1px solid var(--red);border-radius:10px;padding:13px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:sans-serif">全削除</button>
+    </div>
+    <div style="margin-top:10px;text-align:center">
+      <button onclick="exportQuizJSON()" style="background:none;color:var(--blue);border:none;font-size:12px;cursor:pointer;font-family:sans-serif;text-decoration:underline">現在の問題データをエクスポート</button>
+    </div>
+  </div>
+</div>
 
 <script>
 /* ══════════════════════════════════════════════════
@@ -1628,6 +1704,43 @@ function migrate(arr){return arr.map(s=>({...s,subjId:s.subjId||s.subject||''}))
 let tSec=0,tRun=false,tStart=null,tIv=null,tSubjId='',tUnitId='',tIO='input',tMode='study';
 let probSec=0,probRun=false,probStart=null,probIv=null,probCnt=0,probSubjId='',probUnitId='';
 let pomoSec=0,pomoRun=false,pomoStart=null,pomoIv=null,pomoPhase='work',pomoSet=1,pomoSubjId='',pomoUnitId='';
+
+/* ── Wake Lock ── */
+let _wakeLock=null;
+function wakeLockEnabled(){return cfg.wakeLock!==false;}
+function setWakeLockPref(val){
+  cfg.wakeLock=val;saveAll();
+  applyWakeLockUI();
+  if(val&&anyTimerRunning()) acquireWakeLock();
+  else if(!val) releaseWakeLock();
+  toast(val?'🔆 画面スリープ防止: ON':'🔅 画面スリープ防止: OFF');
+}
+function applyWakeLockUI(){
+  const on=wakeLockEnabled();
+  const cb=document.getElementById('set-wakelock');
+  const track=document.getElementById('wakelock-track');
+  const thumb=document.getElementById('wakelock-thumb');
+  if(cb) cb.checked=on;
+  if(track) track.style.background=on?'var(--blue)':'var(--sys-bg4)';
+  if(thumb) thumb.style.transform=on?'translateX(20px)':'translateX(0)';
+}
+async function acquireWakeLock(){
+  if(!wakeLockEnabled()) return;
+  if(!('wakeLock' in navigator)) return;
+  try{
+    _wakeLock=await navigator.wakeLock.request('screen');
+    _wakeLock.addEventListener('release',()=>{_wakeLock=null;});
+  }catch(e){}
+}
+function releaseWakeLock(){
+  if(_wakeLock){_wakeLock.release().catch(()=>{});_wakeLock=null;}
+}
+function anyTimerRunning(){return tRun||probRun||pomoRun;}
+function onTimerStart(){if(!anyTimerRunning())acquireWakeLock();}
+function onTimerStop(){if(!anyTimerRunning())releaseWakeLock();}
+document.addEventListener('visibilitychange',function(){
+  if(document.visibilityState==='visible'&&anyTimerRunning()&&!_wakeLock) acquireWakeLock();
+});
 const POMO_WORK=25*60,POMO_REST=5*60,POMO_SETS=4;
 let logIO='input',editingId=null,editingUnitId=null,editingFCId=null;
 let fcQueue=[],fcIdx=0,fcFlipped=false,fcResults=[];
@@ -1760,19 +1873,19 @@ function setTMode(m){
 function tToggle(){
   if(!tRun){
     tSubjId=document.getElementById('t-subj-sel').value;tUnitId=document.getElementById('t-unit-sel').value;
-    tStart=Date.now()-tSec*1000;tRun=true;
+    tStart=Date.now()-tSec*1000;tRun=true;onTimerStart();
     document.getElementById('t-start').textContent='⏸ 一時停止';
     document.getElementById('t-stop').disabled=false;document.getElementById('t-stop').style.opacity='1';
     const u2=unit(tUnitId),s2=sub(tSubjId);
     document.getElementById('t-sub').textContent=(s2?s2.name:'—')+(u2?` › ${u2.name}`:'')+' '+(tIO==='input'?'📥':'📤');
     tIv=setInterval(()=>{tSec=Math.floor((Date.now()-tStart)/1000);document.getElementById('t-face').textContent=p2(Math.floor(tSec/60))+':'+p2(tSec%60);},1000);
   } else {
-    clearInterval(tIv);tRun=false;
+    clearInterval(tIv);tRun=false;onTimerStop();
     document.getElementById('t-start').textContent='▶ 再開';
   }
 }
 function tStop(){
-  clearInterval(tIv);tRun=false;
+  clearInterval(tIv);tRun=false;onTimerStop();
   const mins=Math.max(1,Math.round(tSec/60));
   if(tSec<30){toast('30秒未満は記録されません');resetT();return;}
   touchUnit(tUnitId,ds(new Date()));
@@ -1784,7 +1897,7 @@ function resetT(){tSec=0;document.getElementById('t-face').textContent='00:00';d
 function pomoToggle(){
   if(!pomoRun){
     pomoSubjId=document.getElementById('pomo-subj-sel').value;pomoUnitId=document.getElementById('pomo-unit-sel').value;
-    pomoStart=Date.now()-pomoSec*1000;pomoRun=true;
+    pomoStart=Date.now()-pomoSec*1000;pomoRun=true;onTimerStart();
     document.getElementById('pomo-start').textContent='⏸ 一時停止';
     document.getElementById('pomo-start').className='btn2 btn2-secondary';
     pomoIv=setInterval(()=>{
@@ -1795,7 +1908,7 @@ function pomoToggle(){
       if(pomoSec>=total){clearInterval(pomoIv);pomoRun=false;pomoTick();}
     },1000);
   } else {
-    clearInterval(pomoIv);pomoRun=false;
+    clearInterval(pomoIv);pomoRun=false;onTimerStop();
     document.getElementById('pomo-start').textContent='▶ 再開';
     document.getElementById('pomo-start').className='btn2 btn2-primary';
   }
@@ -1823,17 +1936,17 @@ function pomoReset(){clearInterval(pomoIv);pomoRun=false;pomoSec=0;pomoPhase='wo
 function probToggle(){
   if(!probRun){
     probSubjId=document.getElementById('prob-subj-sel').value;probUnitId=document.getElementById('prob-unit-sel').value;
-    probStart=Date.now()-probSec*1000;probRun=true;
+    probStart=Date.now()-probSec*1000;probRun=true;onTimerStart();
     document.getElementById('prob-start').textContent='⏸ 一時停止';
-    document.getElementById('prob-stop').disabled=false;document.getElementById('prob-stop').style.opacity='1';
+    document.getElementById('prob-stop').disabled=false;document.getElementById('prob-stop').style.opacity='1';document.getElementById('prob-lap').disabled=false;document.getElementById('prob-lap').style.opacity='1';
     probIv=setInterval(()=>{probSec=Math.floor((Date.now()-probStart)/1000);document.getElementById('prob-face').textContent=p2(Math.floor(probSec/60))+':'+p2(probSec%60);},1000);
   } else {
-    clearInterval(probIv);probRun=false;
+    clearInterval(probIv);probRun=false;onTimerStop();
     document.getElementById('prob-start').textContent='▶ 再開';
   }
 }
 function probStop(){
-  clearInterval(probIv);probRun=false;
+  clearInterval(probIv);probRun=false;onTimerStop();
   const mins=Math.max(1,Math.round(probSec/60));
   if(probSec<30){toast('30秒未満は記録されません');resetProb();return;}
   const avg=probCnt>0?Math.round(probSec/probCnt):0;
@@ -1843,8 +1956,30 @@ function probStop(){
   toast(`✅ ${mins}分・${probCnt}問 記録！`);resetProb();
 }
 function probInc(){probCnt++;document.getElementById('prob-num').textContent=probCnt;}
+
+let probLaps=[];
+function probLap(){
+  if(!probRunning) return;
+  const el=document.getElementById('prob-face');
+  const t=el?el.textContent:'';
+  probLaps.push({n:probCnt,t:t});
+  renderProbLaps();
+  toast('⏱ ラップ '+probLaps.length+': '+t+' ('+probCnt+'問)');
+}
+function renderProbLaps(){
+  const el=document.getElementById('prob-laps');
+  if(!el) return;
+  if(!probLaps.length){el.style.display='none';return;}
+  el.style.display='block';
+  el.innerHTML=probLaps.map(function(l,i){
+    return '<div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:.5px solid var(--sys-sep2);color:var(--lbl2)">'
+      +'<span style="color:var(--lbl3)">Lap '+(i+1)+'</span>'
+      +'<span style="font-family:DM Mono,monospace">'+l.t+'</span>'
+      +'<span style="color:var(--blue)">'+l.n+'問</span></div>';
+  }).join('');
+}
 function probDec(){if(probCnt>0){probCnt--;document.getElementById('prob-num').textContent=probCnt;}}
-function resetProb(){probSec=0;probRun=false;probCnt=0;document.getElementById('prob-face').textContent='00:00';document.getElementById('prob-num').textContent='0';document.getElementById('prob-start').textContent='▶ スタート';document.getElementById('prob-start').className='btn2 btn2-primary';document.getElementById('prob-stop').disabled=true;document.getElementById('prob-stop').style.opacity='.4';}
+function resetProb(){probSec=0;probRun=false;probCnt=0;document.getElementById('prob-face').textContent='00:00';document.getElementById('prob-num').textContent='0';document.getElementById('prob-start').textContent='▶ スタート';document.getElementById('prob-start').className='btn2 btn2-primary';document.getElementById('prob-stop').disabled=true;document.getElementById('prob-stop').style.opacity='.4';document.getElementById('prob-lap').disabled=true;document.getElementById('prob-lap').style.opacity='.4';}
 
 function touchUnit(unitId,date){
   if(!unitId)return;const u=units.find(x=>x.id==unitId);if(!u)return;
@@ -1916,7 +2051,7 @@ function refreshHome(){
   document.getElementById('rv-home-cnt').textContent=allDue.length>0?allDue.length+'件':'';
   document.getElementById('rv-home-list').innerHTML=allDue.length===0
     ?`<div class="ios-card" style="margin:0 16px 8px"><div class="ios-card-body"><div class="empty2"><div class="empty2-ic">🌟</div><div class="empty2-tx">今日の復習は完了！</div></div></div></div>`
-    :allDue.slice(0,5).map(x=>rvItemHTML(x)).join('')+(allDue.length>5?`<div style="text-align:center;padding:8px;font-size:13px;color:var(--blue);cursor:pointer" onclick="goPageByName('review')">残り${allDue.length-5}件を見る</div>`:'');
+    :allDue.slice(0,5).map(x=>rvItemHTML(x)).join('')+(allDue.length>5?`<div style="text-align:center;padding:8px;font-size:13px;color:var(--blue);cursor:pointer" onclick="goPageByName(&apos;review&apos;)">残り${allDue.length-5}件を見る</div>`:'');
 
   document.getElementById('td-min').textContent=tdMin;
   document.getElementById('td-ses').textContent=tdS.length;
@@ -1971,8 +2106,8 @@ function rvItemHTML(x){
     </div>
     <div class="rv-pill-btns">
       ${x.type==='unit'
-        ?`<button class="rv-btn-ok" onclick="doCompleteRv('${x.id}')">✓</button><button class="rv-btn-skip" onclick="skipUnitReview('${x.id}')">延期</button>`
-        :`<button class="rv-btn-ok" onclick="completeFCReview('${x.id}')">✓</button><button class="rv-btn-skip" onclick="skipFCReview('${x.id}')">延期</button>`}
+        ?`<button class="rv-btn-ok" onclick="doCompleteRv(&apos;${x.id}&apos;)">✓</button><button class="rv-btn-skip" onclick="skipUnitReview(&apos;${x.id}&apos;)">延期</button>`
+        :`<button class="rv-btn-ok" onclick="completeFCReview(&apos;${x.id}&apos;)">✓</button><button class="rv-btn-skip" onclick="skipFCReview(&apos;${x.id}&apos;)">延期</button>`}
     </div>
   </div>`;
 }
@@ -1991,7 +2126,7 @@ function sessHTML(s){
     </div>
     <div class="sess-right">
       <div class="sess-dur">${s.minutes}分</div>
-      <button class="sess-edit-btn" onclick="openEdit('${s.id}')">編集</button>
+      <button class="sess-edit-btn" onclick="openEdit(&apos;${s.id}&apos;)">編集</button>
     </div>
   </div>`;
 }
@@ -2003,25 +2138,23 @@ function renderReview(){
   const stageColors=['var(--s0)','var(--s1)','var(--s2)','var(--s3)','var(--s4)','var(--s5)','var(--s6)'];
   const stageBg=['var(--s0b)','var(--s1b)','var(--s2b)','var(--s3b)','var(--s4b)','var(--s5b)','var(--s6b)'];
   const uMax=Math.max(...uCnts,1),cMax=Math.max(...cCnts,1);
-  const mkHeatRow=(cnts,maxV,label)=>`
-    <div style="margin-bottom:10px">
-      <div style="font-size:10px;color:var(--lbl3);margin-bottom:5px;font-weight:600">${label}</div>
-      <div style="display:flex;gap:4px">
-        ${STAGE_NAMES.map((nm,i)=>{
-          const v=cnts[i],pct=Math.round(v/maxV*100);
-          return `<div style="flex:1;text-align:center">
-            <div style="height:44px;border-radius:6px;background:${v>0?stageBg[i]:'var(--sys-bg3)'};
-              border:1px solid ${v>0?stageColors[i]:'transparent'};
-              display:flex;align-items:center;justify-content:center;margin-bottom:3px;
-              position:relative;overflow:hidden">
-              ${v>0?`<div style="position:absolute;bottom:0;left:0;right:0;height:${Math.max(4,pct*44/100)}px;background:${stageColors[i]};opacity:.25;border-radius:0 0 5px 5px"></div>`:''}
-              <span style="font-family:'DM Mono',monospace;font-size:${v>=10?13:15}px;font-weight:600;color:${v>0?stageColors[i]:'var(--lbl4)'};position:relative">${v}</span>
-            </div>
-            <div style="font-size:7px;color:var(--lbl4);line-height:1.2">${nm}</div>
-          </div>`;
-        }).join('')}
-      </div>
-    </div>`;
+  const mkHeatRow=(cnts,maxV,label)=>{
+    const bars=STAGE_NAMES.map((nm,i)=>{
+      const v=cnts[i],pct=maxV>0?Math.round(v/maxV*100):0;
+      const barH=Math.max(6,Math.round(pct*56/100));
+      return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">'
+        +'<div style="font-family:DM Mono,monospace;font-size:13px;font-weight:700;color:'+(v>0?stageColors[i]:'var(--lbl4)')+'">'+v+'</div>'
+        +'<div style="width:100%;height:56px;display:flex;align-items:flex-end;border-radius:6px;background:var(--sys-bg3);overflow:hidden;position:relative">'
+        +(v>0?'<div style="position:absolute;bottom:0;left:0;right:0;height:'+barH+'px;background:'+stageColors[i]+';opacity:.7;border-radius:4px 4px 0 0"></div>':'')
+        +'</div>'
+        +'<div style="font-size:9px;color:var(--lbl3);text-align:center;line-height:1.3;font-weight:500">'+nm+'</div>'
+        +'</div>';
+    }).join('');
+    return '<div style="background:var(--sys-bg2);border-radius:var(--r-md);padding:14px;margin:0 8px 4px">'
+      +'<div style="font-size:11px;font-weight:700;color:var(--lbl3);letter-spacing:.5px;margin-bottom:12px">'+label+'</div>'
+      +'<div style="display:flex;gap:6px">'+bars+'</div>'
+      +'</div>';
+  };
   document.getElementById('curve-ov').innerHTML=mkHeatRow(uCnts,uMax,'単元');
   document.getElementById('curve-ov-fc').innerHTML=mkHeatRow(cCnts,cMax,'カード');
 
@@ -2057,7 +2190,7 @@ function renderReview(){
   const donedC=cards.filter(c=>(c.stage||0)>=6);
   document.getElementById('rv-done').innerHTML=(donedU.length+donedC.length===0)
     ?`<div class="ios-card" style="margin:0 16px 8px"><div class="empty2"><div class="empty2-ic">📖</div><div class="empty2-tx">まだ定着した項目はありません</div></div></div>`
-    :[...donedU.map(u=>{const s2=sub(u.subjId);return `<div class="rv-pill" style="opacity:.55;margin:0 16px 6px"><div class="rv-pill-bar" style="background:var(--green)"></div><div class="rv-pill-body"><div class="rv-pill-name">${u.name}</div><div class="rv-pill-sub">${s2?s2.name:'—'}</div><div class="rv-pill-meta"><span class="stage-pill sp6">定着完了</span></div></div><button class="btn2-xs btn2-secondary" style="flex-shrink:0;background:var(--sys-bg3);color:var(--lbl3);border:none;border-radius:6px;padding:5px 9px;font-size:12px;cursor:pointer" onclick="resetUnitStage('${u.id}')">再開</button></div>`;}),
+    :[...donedU.map(u=>{const s2=sub(u.subjId);return `<div class="rv-pill" style="opacity:.55;margin:0 16px 6px"><div class="rv-pill-bar" style="background:var(--green)"></div><div class="rv-pill-body"><div class="rv-pill-name">${u.name}</div><div class="rv-pill-sub">${s2?s2.name:'—'}</div><div class="rv-pill-meta"><span class="stage-pill sp6">定着完了</span></div></div><button class="btn2-xs btn2-secondary" style="flex-shrink:0;background:var(--sys-bg3);color:var(--lbl3);border:none;border-radius:6px;padding:5px 9px;font-size:12px;cursor:pointer" onclick="resetUnitStage(&apos;${u.id}&apos;)">再開</button></div>`;}),
       ...donedC.map(c=>{const s2=sub(c.subjId);return `<div class="rv-pill" style="opacity:.55;margin:0 16px 6px"><div class="rv-pill-bar" style="background:var(--purple)"></div><div class="rv-pill-body"><div class="rv-pill-name">🃏 ${c.front.substring(0,30)}</div><div class="rv-pill-sub">${s2?s2.name:'—'}</div><div class="rv-pill-meta"><span class="stage-pill sp6">定着完了</span></div></div></div>`;})
     ].join('');
 }
@@ -2085,7 +2218,7 @@ function renderUnits(){
           ${uList.map(u=>unitRowHTML2(u)).join('')}
         </div>
         <div class="add-unit-btn-row">
-          <button class="btn2 btn2-teal btn2-sm" onclick="openUnitSheet('${s.id}')">＋ 単元を追加</button>
+          <button class="btn2 btn2-teal btn2-sm" onclick="openUnitSheet(&apos;${s.id}&apos;)">＋ 単元を追加</button>
         </div>
       </div>
     </div>`;
@@ -2110,8 +2243,8 @@ function unitRowHTML2(u){
       </div>
     </div>
     <div class="unit-row-btns2">
-      ${stage<6?`<button class="btn2 btn2-teal btn2-xs" onclick="doCompleteRv('${u.id}')">✓</button>`:''}
-      <button class="btn2-xs" style="background:var(--sys-bg3);color:var(--lbl2);border:none;border-radius:6px;padding:5px 9px;font-size:12px;cursor:pointer" onclick="openUnitEdit('${u.id}')">編集</button>
+      ${stage<6?`<button class="btn2 btn2-teal btn2-xs" onclick="doCompleteRv(&apos;${u.id}&apos;)">✓</button>`:''}
+      <button class="btn2-xs" style="background:var(--sys-bg3);color:var(--lbl2);border:none;border-radius:6px;padding:5px 9px;font-size:12px;cursor:pointer" onclick="openUnitEdit(&apos;${u.id}&apos;)">編集</button>
     </div>
   </div>`;
 }
@@ -2290,112 +2423,205 @@ function skipFCReview(id){
 }
 
 /* fc view mode: 'decks' | 'cards' */
-let fcViewMode='decks', fcViewSubjId=null;
+/* ════════════════════════════════════
+   FC TAB: 科目→単元→カード→編集
+   アコーディオン展開方式
+════════════════════════════════════ */
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+
+let fcOpenSubj=null, fcOpenUnit=null, fcOpenCard=null;
 
 function renderFC(){
   const fcDue=getFCDue();
-  document.getElementById('fc-due-lbl').textContent=fcDue.length>0?`| 要復習 ${fcDue.length}枚`:'';
+  document.getElementById('fc-due-lbl').textContent=fcDue.length>0?'| 要復習 '+fcDue.length+'枚':'';
   const fcNavBdg=document.getElementById('fc-nav-bdg');
   fcNavBdg.style.display=fcDue.length>0?'flex':'none';
   fcNavBdg.textContent=fcDue.length>9?'9+':fcDue.length;
-  if(fcViewMode==='cards' && fcViewSubjId) renderFCCardList(fcViewSubjId);
-  else renderFCDecks();
+  renderFCTree();
 }
 
-function renderFCDecks(){
+function renderFCTree(){
   const wrap=document.getElementById('fc-deck-list');
-  if(!cards.length){wrap.innerHTML='<div class="empty2"><div class="empty2-ic">🃏</div><div class="empty2-tx">まだカードがありません</div></div>';return;}
-  let html='';
-  SUBJS.forEach(s=>{
-    const sc=cards.filter(c=>c.subjId===s.id);if(!sc.length)return;
-    const due=sc.filter(c=>(c.stage||0)<6&&c.nextDate&&c.nextDate<=ds(new Date())).length;
-    const done=sc.filter(c=>(c.stage||0)>=6).length;
-    html+=`<div style="display:flex;align-items:center;border-bottom:.5px solid var(--sys-sep2)">
-      <div class="fc-deck-row" style="flex:1;border-bottom:none" onclick="showFCCardList('${s.id}')">
-        <div class="fc-deck-icon2">📚</div>
-        <div class="fc-deck-info2">
-          <div class="fc-deck-name2">${s.name} <span style="font-size:11px;color:var(--lbl3)">${s.exam==='tanto'?'短答':'論文'}${s.sel?'★':''}</span></div>
-          <div class="fc-deck-sub2">${sc.length}枚 · 定着${done}枚${due>0?` · <span style="color:var(--red)">要復習${due}枚</span>`:''}</div>
-        </div>
-        <div class="fc-deck-cnt2">${sc.length}</div>
-      </div>
-      <button onclick="startFCStudy('${s.id}')" style="background:var(--blue);color:#fff;border:none;border-radius:var(--r-sm);padding:11px 16px;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap;margin-right:12px;font-family:'Noto Sans JP',sans-serif">学習</button>
-    </div>`;
-  });
-  wrap.innerHTML=html;
-}
+  const today=ds(new Date());
+  const fcDue=getFCDue();
 
-function showFCCardList(subjId){
-  fcViewMode='cards'; fcViewSubjId=subjId;
-  renderFCCardList(subjId);
-}
-
-function renderFCCardList(subjId){
-  const s=sub(subjId);
-  const sc=cards.filter(c=>c.subjId===subjId);
-  const wrap=document.getElementById('fc-deck-list');
-  let html=`<div style="display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:.5px solid var(--sys-sep2)">
-    <button onclick="fcViewMode='decks';renderFC()" style="background:none;border:none;color:var(--blue);font-size:15px;cursor:pointer;padding:4px;font-family:'Noto Sans JP',sans-serif">‹ 戻る</button>
-    <div style="flex:1;font-size:15px;font-weight:700;color:var(--lbl)">${s?s.name:''}</div>
-    <button onclick="openFCSheet('${subjId}')" style="background:var(--blue);color:#fff;border:none;border-radius:var(--r-sm);padding:6px 11px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Noto Sans JP',sans-serif">＋ 追加</button>
-  </div>`;
-  if(!sc.length){
-    html+='<div class="empty2"><div class="empty2-ic">🃏</div><div class="empty2-tx">このデッキにはカードがありません</div></div>';
-    wrap.innerHTML=html; return;
+  if(!cards.length){
+    wrap.innerHTML='<div class="empty2"><div class="empty2-ic">🃏</div><div class="empty2-tx">まだカードがありません</div></div>';
+    return;
   }
-  html+=`<div class="fc-sort-list" id="fcsort-${subjId}" data-subj="${subjId}">`;
-  sc.forEach(c=>{
+
+  // フィルタバー
+  let html='<div style="display:flex;gap:6px;padding:10px 12px;border-bottom:.5px solid var(--sys-sep2);overflow-x:auto;-webkit-overflow-scrolling:touch">';
+  html+='<button onclick="startFCStudy(&apos;_due&apos;)" style="background:var(--red-bg);color:var(--red);border:1.5px solid var(--red);border-radius:20px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:sans-serif">🔔 期限 '+fcDue.length+'枚</button>';
+  html+='<button onclick="startFCStudyByPri(&apos;A&apos;)" style="background:var(--red-bg);color:var(--red);border:1.5px solid var(--red);border-radius:20px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:sans-serif">A 最重要</button>';
+  html+='<button onclick="startFCStudyByPri(&apos;B&apos;)" style="background:var(--orange-bg);color:var(--orange);border:1.5px solid var(--orange);border-radius:20px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:sans-serif">B 重要</button>';
+  html+='<button onclick="startFCStudyByPri(&apos;C&apos;)" style="background:var(--sys-bg3);color:var(--lbl3);border:1.5px solid var(--sys-bg4);border-radius:20px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:sans-serif">C 参考</button>';
+  html+='<button onclick="startFCStudy(&apos;_all&apos;)" style="background:var(--blue-bg);color:var(--blue);border:1.5px solid var(--blue);border-radius:20px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:sans-serif">全て</button>';
+  html+='</div>';
+
+  // 科目リスト（間隔を空けてカード化）
+  SUBJS.forEach(function(s){
+    const sc=cards.filter(function(c){return c.subjId===s.id;});
+    if(!sc.length) return;
+    const due=sc.filter(function(c){return (c.stage||0)<6&&c.nextDate&&c.nextDate<=today;}).length;
+    const done=sc.filter(function(c){return (c.stage||0)>=6;}).length;
+    const isOpen=fcOpenSubj===s.id;
+
+    // ── 科目カード（Level 1）: 明確なカード感、上下マージン ──
+    html+='<div style="margin:10px 12px 0;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.25)">';
+
+    // 科目ヘッダー
+    html+='<div style="display:flex;align-items:center;padding:14px 14px;background:var(--sys-bg2);cursor:pointer" onclick="fcToggleSubj(&apos;'+s.id+'&apos;)">';
+    html+='<div style="width:36px;height:36px;border-radius:9px;background:'+s.colorL+';color:'+s.color+';display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0;letter-spacing:-.3px">'+s.badge+(s.sel?'★':'')+'</div>';
+    html+='<div style="flex:1;margin-left:11px">';
+    html+='<div style="font-size:15px;font-weight:700;color:var(--lbl)">'+esc(s.name)+'<span style="font-size:11px;color:var(--lbl4);font-weight:400;margin-left:6px">'+(s.exam==='tanto'?'短答':'論文')+'</span></div>';
+    html+='<div style="font-size:11px;color:var(--lbl3);margin-top:3px">'+sc.length+'枚';
+    if(done>0) html+=' · <span style="color:var(--green)">定着 '+done+'</span>';
+    if(due>0)  html+=' · <span style="color:var(--red)">期限 '+due+'</span>';
+    html+='</div></div>';
+    html+='<button onclick="event.stopPropagation();startFCStudySmart(&apos;'+s.id+'&apos;)" style="background:var(--blue);color:#fff;border:none;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:sans-serif;line-height:1.4;margin-right:10px">学習<br><span style="font-size:9px;opacity:.75;font-weight:400">10問</span></button>';
+    html+='<span style="font-size:18px;color:var(--lbl3)">'+(isOpen?'▾':'▸')+'</span>';
+    html+='</div>';
+
+    if(isOpen){
+      // 単元なしカード
+      const noUnitCards=sc.filter(function(c){return !c.unitId;});
+      if(noUnitCards.length){
+        const uKey=s.id+'__none';
+        html+=fcUnitRow(uKey,'単元なし',noUnitCards,today,s.color);
+        if(fcOpenUnit===uKey) html+=fcCardRows(noUnitCards,today);
+      }
+      // 単元ごと
+      const unitIds=[...new Set(sc.map(function(c){return c.unitId;}).filter(Boolean))];
+      unitIds.forEach(function(uid){
+        const u=unit(uid);
+        const uc=sc.filter(function(c){return c.unitId==uid;});
+        const uKey=s.id+'__'+uid;
+        html+=fcUnitRow(uKey,u?u.name:('単元'+uid),uc,today,s.color);
+        if(fcOpenUnit===uKey) html+=fcCardRows(uc,today);
+      });
+    }
+
+    html+='</div>'; // 科目カード終了
+  });
+
+  html+='<div style="height:8px"></div>';
+  wrap.innerHTML=html;
+  setTimeout(fcAfterRenderSort,0);
+}
+
+function fcUnitRow(key,name,uc,today,accentColor){
+  const uDue=uc.filter(function(c){return (c.stage||0)<6&&c.nextDate&&c.nextDate<=today;}).length;
+  const isOpen=fcOpenUnit===key;
+  // unitId from key: subjId__unitId
+  const uid=key.split('__')[1];
+  let html='<div style="display:flex;align-items:center;padding:10px 12px 10px 20px;border-top:.5px solid var(--sys-sep2);background:var(--sys-bg)">';
+  html+='<div style="width:3px;align-self:stretch;border-radius:2px;background:'+(uDue>0?'var(--red)':'var(--sys-bg4)')+';margin-right:11px;flex-shrink:0"></div>';
+  html+='<div style="flex:1;min-width:0;cursor:pointer" onclick="fcToggleUnit(&apos;'+key+'&apos;)">';
+  html+='<div style="font-size:13px;font-weight:600;color:var(--lbl2)">'+esc(name)+'</div>';
+  html+='<div style="font-size:11px;color:var(--lbl3);margin-top:2px">'+uc.length+'枚'+(uDue>0?' · <span style="color:var(--red);font-weight:600">期限 '+uDue+'</span>':'')+'</div>';
+  html+='</div>';
+  if(uid&&uid!=='none') html+='<button onclick="startFCStudyByUnit(&apos;'+uid+'&apos;)" style="background:var(--teal-bg,rgba(90,200,180,.15));color:var(--teal);border:1px solid var(--teal);border-radius:7px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:sans-serif;margin-right:8px">学習</button>';
+  html+='<span style="font-size:16px;color:var(--lbl3);cursor:pointer" onclick="fcToggleUnit(&apos;'+key+'&apos;)">'+(isOpen?'▾':'▸')+'</span>';
+  html+='</div>';
+  return html;
+}
+
+function fcCardRows(uc,today){
+  // ── カード行（Level 3）: 最も暗い背景 ──
+  const sortId='fcsort-'+uc.map(function(c){return c.id;}).join('_').substring(0,20);
+  let html='<div class="fc-sort-list" id="'+sortId+'" data-subj="fc" style="background:var(--sys-bg3)">';
+  uc.forEach(function(c){
     const stage=c.stage||0;
-    const today=ds(new Date());
     const isDue=c.nextDate&&c.nextDate<=today&&stage<6;
-    const u2=unit(c.unitId);
-    html+=`<div class="fc-sort-row" data-cid="${c.id}" draggable="true" style="display:flex;align-items:flex-start;gap:10px;padding:11px 14px;border-bottom:.5px solid var(--sys-sep2);background:var(--sys-bg2);">
-      <div style="padding:2px 6px 0 0;color:var(--lbl4);cursor:grab;font-size:18px;flex-shrink:0;touch-action:none;line-height:1.4">⠿</div>
-      <div style="flex:1;min-width:0">
-        <div style="font-size:13px;font-weight:500;color:var(--lbl);margin-bottom:3px;line-height:1.4">${c.front}</div>
-        <div style="font-size:11px;color:var(--lbl3);margin-bottom:4px;line-height:1.4">${c.back.length>50?c.back.substring(0,50)+'…':c.back}</div>
-        <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap">
-          <span class="stage-pill ${SC[stage]}">${STAGE_NAMES[stage]}</span>
-          ${u2?`<span style="font-size:10px;color:var(--lbl3)">${u2.name}</span>`:''}
-          ${isDue?`<span style="font-size:10px;color:var(--red);font-weight:600">要復習</span>`:''}
-        </div>
-      </div>
-      <button onclick="openFCEdit('${c.id}')" style="background:var(--sys-bg3);color:var(--lbl2);border:none;border-radius:var(--r-sm);padding:7px 10px;font-size:12px;cursor:pointer;white-space:nowrap;flex-shrink:0;font-family:'Noto Sans JP',sans-serif">編集</button>
-    </div>`;
+    const isOpen=fcOpenCard==c.id;
+    const pri=c.priority||'';
+    const priColor=pri==='A'?'var(--red)':pri==='B'?'var(--orange)':'var(--lbl4)';
+    const priBg=pri==='A'?'var(--red-bg)':pri==='B'?'var(--orange-bg)':'var(--sys-bg4)';
+    const leftColor=isDue?'var(--red)':pri==='A'?'var(--red)':pri==='B'?'var(--orange)':'var(--sys-bg4)';
+
+    html+='<div class="fc-sort-row" data-cid="'+c.id+'" draggable="true" style="border-top:.5px solid var(--sys-sep2)">';
+    // カード行
+    html+='<div style="display:flex;align-items:flex-start;padding:11px 14px 11px 28px;cursor:pointer;border-left:3px solid '+leftColor+'" onclick="fcToggleCard(&apos;'+c.id+'&apos;)">';
+    html+='<div style="padding:2px 8px 0 0;color:var(--lbl4);cursor:grab;font-size:16px;flex-shrink:0;touch-action:none" class="fc-sort-handle">⠿</div>';
+    html+='<div style="flex:1;min-width:0">';
+    html+='<div style="font-size:13px;font-weight:500;color:var(--lbl);line-height:1.5">'+esc(c.front)+'</div>';
+    html+='<div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;margin-top:5px">';
+    html+='<span class="stage-pill '+SC[stage]+'">'+STAGE_NAMES[stage]+'</span>';
+    if(pri) html+='<span style="background:'+priBg+';color:'+priColor+';font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px">'+pri+'</span>';
+    if(isDue) html+='<span style="background:var(--red-bg);color:var(--red);font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px">要復習</span>';
+    html+='</div></div>';
+    html+='<span style="font-size:16px;color:var(--lbl3);margin-left:8px;flex-shrink:0;margin-top:2px">'+(isOpen?'▾':'▸')+'</span>';
+    html+='</div>';
+
+    // 展開: 裏面 + ボタン
+    if(isOpen){
+      html+='<div style="padding:14px 16px 16px 28px;background:var(--sys-bg2);border-top:.5px solid var(--sys-sep2)">';
+      html+='<div style="font-size:11px;font-weight:700;color:var(--lbl4);letter-spacing:1.5px;margin-bottom:8px">ANSWER</div>';
+      html+='<div style="font-size:14px;color:var(--lbl);line-height:1.75;margin-bottom:14px;white-space:pre-wrap">'+esc(c.back)+'</div>';
+      html+='<div style="display:flex;gap:8px;flex-wrap:wrap">';
+      html+='<button onclick="openFCEdit(&apos;'+c.id+'&apos;)" style="background:var(--sys-bg3);color:var(--lbl2);border:1px solid var(--sys-bg4);border-radius:8px;padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:sans-serif">✏️ 編集</button>';
+      if(stage<6) html+='<button onclick="completeFCReview(&apos;'+c.id+'&apos;)" style="background:var(--green-bg);color:var(--green);border:1.5px solid var(--green);border-radius:8px;padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:sans-serif">✓ 復習完了</button>';
+      html+='</div></div>';
+    }
+    html+='</div>';
   });
   html+='</div>';
-  wrap.innerHTML=html;
-  const sortList=document.getElementById('fcsort-'+subjId);
-  if(sortList) initFCSort(sortList);
+  return html;
 }
 
+function fcAfterRenderSort(){
+  document.querySelectorAll('.fc-sort-list').forEach(function(list){
+    if(!list._fcSortInit){list._fcSortInit=true;initFCSort(list);}
+  });
+}
+
+function fcToggleSubj(subjId){
+  fcOpenSubj = fcOpenSubj===subjId ? null : subjId;
+  fcOpenUnit=null; fcOpenCard=null;
+  renderFCTree();
+}
+function fcToggleUnit(key){
+  fcOpenUnit = fcOpenUnit===key ? null : key;
+  fcOpenCard=null;
+  renderFCTree();
+}
+function fcToggleCard(id){
+  fcOpenCard = fcOpenCard==id ? null : id;
+  renderFCTree();
+}
+
+// legacy compat
+function showFCCardList(subjId){ fcToggleSubj(subjId); }
+
+
+/* ── FC カードソート ── */
 function initFCSort(list){
   let dragging=null,touchDragging=null,touchClone=null;
-
-  list.addEventListener('dragstart',e=>{
+  list.addEventListener('dragstart',function(e){
     dragging=e.target.closest('.fc-sort-row');
     if(!dragging)return;
     dragging.style.opacity='.4';
     e.dataTransfer.effectAllowed='move';
   });
-  list.addEventListener('dragend',()=>{
+  list.addEventListener('dragend',function(){
     if(dragging)dragging.style.opacity='';
     dragging=null;
-    list.querySelectorAll('.fc-sort-row').forEach(r=>r.style.borderTop='');
+    list.querySelectorAll('.fc-sort-row').forEach(function(r){r.style.borderTop='';});
   });
-  list.addEventListener('dragover',e=>{
+  list.addEventListener('dragover',function(e){
     e.preventDefault();
     const target=e.target.closest('.fc-sort-row');
     if(!target||target===dragging)return;
-    list.querySelectorAll('.fc-sort-row').forEach(r=>r.style.borderTop='');
+    list.querySelectorAll('.fc-sort-row').forEach(function(r){r.style.borderTop='';});
     const rect=target.getBoundingClientRect();
     const after=e.clientY>rect.top+rect.height/2;
     if(!after)target.style.borderTop='2px solid var(--blue)';
     else{const n=target.nextElementSibling;if(n&&n.classList.contains('fc-sort-row'))n.style.borderTop='2px solid var(--blue)';}
   });
-  list.addEventListener('drop',e=>{
+  list.addEventListener('drop',function(e){
     e.preventDefault();
-    list.querySelectorAll('.fc-sort-row').forEach(r=>r.style.borderTop='');
+    list.querySelectorAll('.fc-sort-row').forEach(function(r){r.style.borderTop='';});
     const target=e.target.closest('.fc-sort-row');
     if(!target||!dragging||target===dragging)return;
     const rect=target.getBoundingClientRect();
@@ -2403,8 +2629,7 @@ function initFCSort(list){
     list.insertBefore(dragging,after?target.nextSibling:target);
     commitFCOrder(list);
   });
-
-  list.addEventListener('touchstart',e=>{
+  list.addEventListener('touchstart',function(e){
     const handle=e.target.closest('[style*="grab"]');
     if(!handle)return;
     touchDragging=handle.closest('.fc-sort-row');
@@ -2412,12 +2637,11 @@ function initFCSort(list){
     touchDragging.style.opacity='.45';
     const r=touchDragging.getBoundingClientRect();
     touchClone=touchDragging.cloneNode(true);
-    touchClone.style.cssText=`position:fixed;left:${r.left}px;top:${r.top}px;width:${r.width}px;opacity:.85;z-index:999;pointer-events:none;background:var(--sys-bg2);border-radius:var(--r-md);box-shadow:0 8px 24px rgba(0,0,0,.4);`;
+    touchClone.style.cssText='position:fixed;left:'+r.left+'px;top:'+r.top+'px;width:'+r.width+'px;opacity:.85;z-index:999;pointer-events:none;background:var(--sys-bg2);border-radius:var(--r-md);box-shadow:0 8px 24px rgba(0,0,0,.4);';
     document.body.appendChild(touchClone);
     e.preventDefault();
   },{passive:false});
-
-  list.addEventListener('touchmove',e=>{
+  list.addEventListener('touchmove',function(e){
     if(!touchDragging||!touchClone)return;
     e.preventDefault();
     const t=e.touches[0];
@@ -2425,21 +2649,20 @@ function initFCSort(list){
     touchClone.style.display='none';
     const el=document.elementFromPoint(t.clientX,t.clientY);
     touchClone.style.display='';
-    const target=el?.closest('.fc-sort-row');
+    const target=el&&el.closest('.fc-sort-row');
     if(target&&target!==touchDragging){
-      list.querySelectorAll('.fc-sort-row').forEach(r=>r.style.borderTop='');
+      list.querySelectorAll('.fc-sort-row').forEach(function(r){r.style.borderTop='';});
       const rect=target.getBoundingClientRect();
       const after=t.clientY>rect.top+rect.height/2;
       if(!after)target.style.borderTop='2px solid var(--blue)';
       list.insertBefore(touchDragging,after?target.nextSibling:target);
     }
   },{passive:false});
-
-  list.addEventListener('touchend',()=>{
+  list.addEventListener('touchend',function(){
     if(!touchDragging)return;
     touchDragging.style.opacity='';
     if(touchClone){touchClone.remove();touchClone=null;}
-    list.querySelectorAll('.fc-sort-row').forEach(r=>r.style.borderTop='');
+    list.querySelectorAll('.fc-sort-row').forEach(function(r){r.style.borderTop='';});
     commitFCOrder(list);
     touchDragging=null;
   },{passive:true});
@@ -2447,12 +2670,70 @@ function initFCSort(list){
 
 function commitFCOrder(list){
   const subjId=list.dataset.subj;
-  const newOrder=[...list.querySelectorAll('.fc-sort-row')].map(r=>r.dataset.cid);
-  const others=cards.filter(c=>c.subjId!==subjId);
-  const reordered=newOrder.map(id=>cards.find(c=>c.id==id)).filter(Boolean);
+  const newOrder=[...list.querySelectorAll('.fc-sort-row')].map(function(r){return r.dataset.cid;});
+  const others=cards.filter(function(c){return c.subjId!==subjId;});
+  const reordered=newOrder.map(function(id){return cards.find(function(c){return c.id==id;});}).filter(Boolean);
   cards=[...others,...reordered];
   saveAll();
   toast('✅ 並び替えを保存しました');
+}
+
+/* ── スマート出題: 復習サイクル×重要度で優先10問 ── */
+function startFCStudySmart(subjId){
+  const sc=cards.filter(c=>c.subjId===subjId);
+  if(!sc.length){toast('このデッキにはカードがありません');return;}
+  const today=ds(new Date());
+  const LIMIT=10;
+
+  // スコアリング: 高いほど優先
+  const scored=sc.map(c=>{
+    let score=0;
+    const stage=c.stage||0;
+    const pri=c.priority||'B';
+    // 重要度
+    if(pri==='A') score+=300;
+    else if(pri==='B') score+=150;
+    // 復習期限
+    if(c.nextDate){
+      const diff=Math.ceil((new Date(c.nextDate)-new Date())/86400000);
+      if(diff<=0) score+=500;       // 期限超過: 最優先
+      else if(diff<=1) score+=400;  // 明日
+      else if(diff<=3) score+=200;  // 3日以内
+    }
+    // ステージが低いほど優先（未定着）
+    score+=(5-Math.min(stage,5))*40;
+    // 少しランダムネスを加えて毎回変化
+    score+=Math.random()*30;
+    return {...c, _score:score};
+  });
+
+  scored.sort((a,b)=>b._score-a._score);
+  const pool=scored.slice(0,LIMIT);
+  const s2=sub(subjId);
+  startFCStudyPool(pool,(s2?s2.name:'')+'  スマート10問');
+}
+
+function startFCStudyByPri(pri){
+  const pool=cards.filter(c=>c.priority===pri);
+  if(!pool.length){toast(`重要度${pri}のカードがありません`);return;}
+  startFCStudyPool([...pool],'重要度 '+pri+' 学習');
+}
+
+function startFCStudyByUnit(unitId){
+  const u=unit(unitId);
+  const pool=cards.filter(c=>c.unitId==unitId);
+  if(!pool.length){toast('この単元にはカードがありません');return;}
+  startFCStudyPool([...pool],(u?u.name:'単元')+'の学習');
+}
+
+function startFCStudyPool(pool,title){
+  // shuffle
+  for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
+  fcQueue=[...pool];fcIdx=0;fcFlipped=false;fcResults=[];
+  showFCCard();
+  document.getElementById('fc-study-ov').classList.add('open');
+  document.getElementById('fc-study-title').textContent=title;
+  initFCSwipe();
 }
 
 function startFCStudy(subjId){
@@ -2483,6 +2764,10 @@ function showFCCard(){
   card.style.transform='';card.style.opacity='';card.style.transition='';
   document.getElementById('fc-front-text').textContent=c.front;
   document.getElementById('fc-back-text').textContent=c.back;
+  // priority indicator
+  const priColors={A:'var(--red)',B:'var(--orange)',C:'var(--lbl3)'};
+  const priEl=document.getElementById('fc-priority-badge');
+  if(priEl){priEl.textContent=c.priority||'A';priEl.style.color=priColors[c.priority||'A'];}
   document.getElementById('fc-rating-wrap').style.display='none';
   document.getElementById('fc-complete-wrap').style.display='none';
   card.style.display='';
@@ -2576,6 +2861,21 @@ function deferCard(){
   showFCCard();
 }
 
+let _fcPri='A';
+function setFCPri(p){
+  _fcPri=p;
+  ['A','B','C'].forEach(x=>{
+    const btn=document.getElementById('fc-pri-'+x);
+    if(!btn)return;
+    if(x===p){
+      const colors={A:'var(--red)',B:'var(--orange)',C:'var(--lbl3)'};
+      const bgs={A:'var(--red-bg)',B:'var(--orange-bg)',C:'var(--sys-bg3)'};
+      btn.style.borderColor=colors[x];btn.style.background=bgs[x];btn.style.color=colors[x];btn.style.opacity='1';
+    } else {
+      btn.style.borderColor='var(--sys-bg4)';btn.style.background='var(--sys-bg3)';btn.style.color='var(--lbl4)';btn.style.opacity='.5';
+    }
+  });
+}
 function openFCSheet(subjId){
   editingFCId=null;
   document.getElementById('fc-sh-ttl').textContent='カードを追加';
@@ -2585,6 +2885,7 @@ function openFCSheet(subjId){
   document.getElementById('fc-front').value='';
   document.getElementById('fc-back').value='';
   document.getElementById('fc-del-btn').style.display='none';
+  setFCPri('A');
   document.getElementById('fc-ov').classList.add('open');
 }
 function openFCEdit(id){
@@ -2597,6 +2898,7 @@ function openFCEdit(id){
   document.getElementById('fc-front').value=c.front||'';
   document.getElementById('fc-back').value=c.back||'';
   document.getElementById('fc-del-btn').style.display='';
+  setFCPri(c.priority||'A');
   document.getElementById('fc-ov').classList.add('open');
 }
 function closeFC(){document.getElementById('fc-ov').classList.remove('open');}
@@ -2607,12 +2909,13 @@ function saveFC(){
   const unitId=document.getElementById('fc-unit-sel').value;
   if(!front||!back){toast('⚠️ 表面と裏面を入力してください');return;}
   const today=ds(new Date());
+  const priority=_fcPri||'A';
   if(editingFCId!==null){
     const idx=cards.findIndex(x=>x.id==editingFCId);
-    if(idx>=0)cards[idx]={...cards[idx],front,back,subjId,unitId};
+    if(idx>=0)cards[idx]={...cards[idx],front,back,subjId,unitId,priority};
     saveAll();toast('✅ カードを更新しました');
   } else {
-    cards.push({id:Date.now(),subjId,unitId,front,back,stage:0,nextDate:nextRvDate(today,0)});
+    cards.push({id:Date.now(),subjId,unitId,front,back,stage:0,nextDate:nextRvDate(today,0),priority});
     saveAll();toast('✅ カードを追加しました');
   }
   closeFC();renderFC();updateNavBadge();
@@ -2775,7 +3078,7 @@ function renderCal(){
     // 色: 今日は--blue固定、祝日/日曜は赤、土曜は青、それ以外はデフォルト
     const colorStyle=dstr===today?'':isRed?'color:var(--red)':isSat?'color:var(--blue)':'';
     const cls=['cal-day2',dstr===today?'today':'',hasDates.has(dstr)?'has':'',calSel===dstr?'sel':''].filter(Boolean).join(' ');
-    html+=`<div class="${cls}" style="${colorStyle}" onclick="calSel2('${dstr}')" ${holName?`title="${holName}"`:''}>${d}</div>`;
+    html+=`<div class="${cls}" style="${colorStyle}" onclick="calSel2(&apos;${dstr}&apos;)" ${holName?`title="${holName}"`:''}>${d}</div>`;
   }
   document.getElementById('cal-grid').innerHTML=html;
   if(calSel)showCalDetail(calSel);
@@ -2833,22 +3136,38 @@ function renderStats(){
     const prevDays7  = prevWk.filter(d=>d.tot>0).length;
     const prevAvg    = prevDays7>0 ? Math.round(prevTotal7/prevDays7) : 0;
 
-    // 比較表示ヘルパー
-    const cmp=(cur,prev)=>{
+    // 比較表示ヘルパー（単位別）
+    // 7日間合計: h単位
+    const cmpH=(cur,prev)=>{
       if(prev===0&&cur===0) return '';
-      const diff = cur-prev;
-      if(diff===0) return `<span style="color:var(--lbl3);font-size:10px">±0</span>`;
-      const arrow = diff>0 ? '↑' : '↓';
-      const color = diff>0 ? 'var(--green)' : 'var(--red)';
-      const val   = Math.abs(diff);
-      return `<span style="color:${color};font-size:10px;font-weight:600">${arrow}${val>60?h1(val*1)+'h':val+'分'}</span>`;
+      const diff=h1(cur)-h1(prev);
+      if(diff===0) return '<span style="color:var(--lbl3);font-size:10px">±0h</span>';
+      const color=diff>0?'var(--green)':'var(--red)';
+      return '<span style="color:'+color+';font-size:10px;font-weight:600">'+(diff>0?'↑':'↓')+Math.abs(diff)+'h</span>';
     };
+    // 学習日数: 日単位
+    const cmpDay=(cur,prev)=>{
+      if(prev===0&&cur===0) return '';
+      const diff=cur-prev;
+      if(diff===0) return '<span style="color:var(--lbl3);font-size:10px">±0日</span>';
+      const color=diff>0?'var(--green)':'var(--red)';
+      return '<span style="color:'+color+';font-size:10px;font-weight:600">'+(diff>0?'↑':'↓')+Math.abs(diff)+'日</span>';
+    };
+    // 1日平均: 分単位
+    const cmpMin=(cur,prev)=>{
+      if(prev===0&&cur===0) return '';
+      const diff=cur-prev;
+      if(diff===0) return '<span style="color:var(--lbl3);font-size:10px">±0分</span>';
+      const color=diff>0?'var(--green)':'var(--red)';
+      return '<span style="color:'+color+';font-size:10px;font-weight:600">'+(diff>0?'↑':'↓')+Math.abs(diff)+'分</span>';
+    };
+    // 合計のパーセント比較
     const cmpPct=(cur,prev)=>{
-      if(prev===0) return cur>0?`<span style="color:var(--green);font-size:10px;font-weight:600">↑NEW</span>`:'';
+      if(prev===0) return cur>0?'<span style="color:var(--green);font-size:10px;font-weight:600">↑NEW</span>':'';
       const pct=Math.round((cur-prev)/prev*100);
-      if(pct===0) return `<span style="color:var(--lbl3);font-size:10px">±0%</span>`;
+      if(pct===0) return '<span style="color:var(--lbl3);font-size:10px">±0%</span>';
       const color=pct>0?'var(--green)':'var(--red)';
-      return `<span style="color:${color};font-size:10px;font-weight:600">${pct>0?'↑':'↓'}${Math.abs(pct)}%</span>`;
+      return '<span style="color:'+color+';font-size:10px;font-weight:600">'+(pct>0?'↑':'↓')+Math.abs(pct)+'%</span>';
     };
 
     // 7-day sparkline bars（今週＋先週を薄く並べる）
@@ -2887,7 +3206,7 @@ function renderStats(){
             <div style="font-size:10px;color:var(--lbl3);margin-bottom:3px">学習日数</div>
             <div style="display:flex;align-items:baseline;gap:5px">
               <div style="font-family:'DM Mono',monospace;font-size:24px;font-weight:400;color:var(--lbl);line-height:1">${days7}<span style="font-size:12px;color:var(--lbl3);margin-left:2px">日</span></div>
-              ${cmp(days7,prevDays7)}
+              ${cmpDay(days7,prevDays7)}
             </div>
             <div style="font-size:10px;color:var(--lbl4);margin-top:2px">先週 ${prevDays7}日</div>
           </div>
@@ -2895,7 +3214,7 @@ function renderStats(){
             <div style="font-size:10px;color:var(--lbl3);margin-bottom:3px">1日平均</div>
             <div style="display:flex;align-items:baseline;gap:5px">
               <div style="font-family:'DM Mono',monospace;font-size:24px;font-weight:400;color:var(--lbl);line-height:1">${avgDay}<span style="font-size:12px;color:var(--lbl3);margin-left:2px">分</span></div>
-              ${cmp(avgDay,prevAvg)}
+              ${cmpMin(avgDay,prevAvg)}
             </div>
             <div style="font-size:10px;color:var(--lbl4);margin-top:2px">先週 ${prevAvg}分</div>
           </div>
@@ -3031,6 +3350,7 @@ function renderStats(){
 /* ── SETTINGS ── */
 function loadCfgUI(){
   applyTheme(cfg.theme||'dark');
+  applyWakeLockUI();
   document.getElementById('set-tanto').value=cfg.tantoDate||'';
   document.getElementById('set-ronbun').value=cfg.ronbunDate||'';
   document.getElementById('set-hours').value=cfg.goalHours||3500;
@@ -3080,7 +3400,7 @@ function updateNotifStatus(){const el=document.getElementById('notif-status');if
 async function requestNotif(){if(!('Notification'in window)){toast('通知非対応のブラウザです');return;}const r=await Notification.requestPermission();if(r==='granted'){toast('✅ 通知を有効にしました');scheduleNotif();}else toast('通知の許可が必要です');updateNotifStatus();}
 function scheduleNotif(){if(notifTimer)clearTimeout(notifTimer);if(!('Notification'in window)||Notification.permission!=='granted')return;const now=new Date();const[hh,mm]=(cfg.notifTime||'08:00').split(':').map(Number);const t=new Date(now);t.setHours(hh,mm,0,0);if(t<=now)t.setDate(t.getDate()+1);notifTimer=setTimeout(()=>{sendNotif();scheduleNotif();},t-now);}
 function sendNotif(){const due=getDue().length+getFCDue().length;if(!due||Notification.permission!=='granted')return;new Notification('📚 CPA Study — 復習リマインド',{body:`今日の復習が${due}件あります。忘却曲線に合わせて取り組みましょう！`,tag:'cpa-review',requireInteraction:true});}
-function checkNotifBar(){const due=getDue().length+getFCDue().length;const wrap=document.getElementById('notif-bar-wrap');if(!wrap)return;if(due===0){wrap.innerHTML='';return;}wrap.innerHTML=`<div class="notif-bar2"><div class="notif-bar2-icon">🔔</div><div class="notif-bar2-body"><div class="notif-bar2-title">今日の復習が ${due}件 あります</div><div class="notif-bar2-sub">忘却曲線に基づく復習タイミングです</div></div><button class="notif-bar2-btn" onclick="goPageByName('review')">確認</button></div>`;}
+function checkNotifBar(){const due=getDue().length+getFCDue().length;const wrap=document.getElementById('notif-bar-wrap');if(!wrap)return;if(due===0){wrap.innerHTML='';return;}wrap.innerHTML=`<div class="notif-bar2"><div class="notif-bar2-icon">🔔</div><div class="notif-bar2-body"><div class="notif-bar2-title">今日の復習が ${due}件 あります</div><div class="notif-bar2-sub">忘却曲線に基づく復習タイミングです</div></div><button class="notif-bar2-btn" onclick="goPageByName(&apos;review&apos;)">確認</button></div>`;}
 
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
 
@@ -3124,7 +3444,7 @@ function setTheme(theme){
 /* ════════════════════════════════════
    SWIPE NAVIGATION
 ════════════════════════════════════ */
-const PAGE_ORDER = ['home','review','units','fc','hist','stats','set'];
+const PAGE_ORDER = ['home','review','units','fc','hist','stats','quiz','set'];
 
 (()=>{
   const content = document.getElementById('main-content');
@@ -3156,6 +3476,201 @@ const PAGE_ORDER = ['home','review','units','fc','hist','stats','set'];
   }, {passive:true});
 })();
 
+const QUIZ_DATA=[{"no":1,"topic":"会社法総論","q":"会社とは，株式会社，合名会社，合資会社又は合同会社をいう。","ans":true,"exp":"会社法2条1号の定義。持分会社（合名・合資・合同）と株式会社の4種類。","diff":"A"},{"no":2,"topic":"会社法総論","q":"外国会社は，会社法上の「会社」に含まれる。","ans":false,"exp":"外国会社は会社法2条2号で別途定義されており，「会社」（2条1号）には含まれない。","diff":"A"},{"no":3,"topic":"会社法総論","q":"株式会社の株主は，会社の債務について，出資額を超えて責任を負うことはない。","ans":true,"exp":"株主有限責任の原則（104条）。株主の責任は引受価額を限度とする。","diff":"A"},{"no":4,"topic":"会社法総論","q":"合名会社の社員は，会社の債務について，直接無限責任を負う。","ans":true,"exp":"合名会社の社員は無限責任社員のみ（576条2項）。直接・連帯・無限の責任を負う。","diff":"A"},{"no":5,"topic":"会社法総論","q":"合資会社には，無限責任社員と有限責任社員の両方が存在しなければならない。","ans":true,"exp":"合資会社は無限責任社員と有限責任社員で組織される（576条3項）。","diff":"A"},{"no":6,"topic":"会社法総論","q":"合同会社の社員は，全員が有限責任社員である。","ans":true,"exp":"合同会社の社員は有限責任社員のみ（576条4項）。","diff":"A"},{"no":7,"topic":"会社法総論","q":"株式会社は，必ず公開会社でなければならない。","ans":false,"exp":"非公開会社（全株式に譲渡制限を付した会社）も株式会社として認められる。","diff":"A"},{"no":8,"topic":"会社法総論","q":"大会社とは，最終事業年度の貸借対照表上の資本金が5億円以上，または負債額が200億円以上の株式会社をいう。","ans":true,"exp":"2条6号。資本金5億円以上または負債200億円以上のいずれかを満たす株式会社。","diff":"A"},{"no":9,"topic":"会社法総論","q":"会社は法人であり，その名において権利を有し義務を負うので，株主または社員が会社の債務について会社債権者に対して直接に責任を負うことはない。","ans":false,"exp":"合名・合資会社の無限責任社員，合資会社の有限責任社員は直接責任を負う（580条）。なお，持分会社も「会社」である（2条1号）。","diff":"A"},{"no":10,"topic":"会社法総論","q":"会社による政治資金の寄附は，客観的，抽象的に観察して，会社の社会的役割を果たすためになされたものと認められるかぎりにおいては，会社の定款所定の目的の範囲内の行為であるとするのが判例である。","ans":true,"exp":"最判昭和45年6月24日（八幡製鉄政治献金事件）の趣旨。","diff":"B"},{"no":11,"topic":"会社法総論","q":"会社が業務の委託等をした者は，会社の「使用人」に当たる。","ans":false,"exp":"使用人とは雇用関係にある者をいう。委託関係にある者は含まれない。","diff":"A"},{"no":12,"topic":"会社法総論","q":"当該株式会社の重要な使用人の配偶者は，当該株式会社の社外取締役になることができる。","ans":false,"exp":"2条15号ホ。当該会社の取締役・執行役・支配人その他の重要な使用人または自然人たる親会社等の配偶者または2親等内の親族は，社外取締役にはなれない。","diff":"B"},{"no":13,"topic":"会社法総論","q":"任期満了により株式会社の社外取締役を退任した者は，その後，当該株式会社の社外監査役になることができない。","ans":false,"exp":"その就任前10年間，当該会社・子会社の取締役・会計参与・執行役・使用人でなかった者は，社外監査役となりうる（2条16号イ）。社外取締役を退任後10年が経過していれば，他の要件もみたしていれば社外監査役になりうる。","diff":"B"},{"no":14,"topic":"会社法総論","q":"株式会社の監査役は，当該株式会社の子会社の社外監査役となることができる。","ans":false,"exp":"当該会社の自然人たる親会社等または親会社等の取締役・監査役・執行役・支配人その他の使用人は，社外監査役にはなれない（2条16号ハ）。したがって，親会社の監査役は子会社の社外監査役にはなれない。","diff":"B"},{"no":15,"topic":"会社法総論","q":"株式会社の取締役の二親等内の親族は，当該株式会社の社外監査役となることができない。","ans":true,"exp":"当該会社の取締役・支配人その他の重要な使用人・自然人たる親会社等の配偶者または2親等内の親族は，社外監査役にはなれない（2条16号ホ）。","diff":"B"},{"no":16,"topic":"会社法総論","q":"会社法上，業務執行取締役となることができるのは，代表取締役だけではない。","ans":true,"exp":"他に，選定業務執行取締役（業務担当取締役）や会社の業務を執行した取締役も含まれる（2条15号イ）。","diff":"A"},{"no":17,"topic":"会社法総論","q":"会社法上の定義における「最終事業年度」とは，単に最も遅い事業年度のことを意味し，各事業年度に係る計算書類につき定時株主総会の承認（会計監査人設置会社で一定の要件をみたした会社については取締役会の承認）を受けているか否かは関係しない。","ans":false,"exp":"最終事業年度とは，各事業年度に係る計算書類につき定時株主総会の承認（会計監査人設置会社で一定の要件をみたした会社では取締役会の承認）を受けた各事業年度のうち最も遅いものをいう（2条24号）。したがって，仮に最も遅い事業年度でも，上記承認を受けていなければ，「最終事業年度」ではない。","diff":"C"},{"no":18,"topic":"会社法総論","q":"合名会社が利益の配当をする場合における配当する財産は，配当財産である。","ans":false,"exp":"会社法上，「配当財産」とは，株式会社が剰余金の配当をする場合における配当する財産をいう（2条25号）。","diff":"C"},{"no":19,"topic":"会社法総論","q":"相互保険会社は，会社法上の会社ではない。","ans":true,"exp":"相互保険会社には「社員」が存在せず，したがって社員への利益分配はないから，営利性がなく，会社法上の会社ではない。","diff":"C"},{"no":20,"topic":"会社法総論","q":"株式会社では株主が一人だけの一人会社は認められるが，持分会社では社員が一人だけの一人会社は認められない。","ans":false,"exp":"前半は正しいが，後半が誤り。持分会社でも一人会社が認められる（641条4号参照）。","diff":"A"},{"no":21,"topic":"会社法総論","q":"会社は法人であり，その名において権利を有し義務を負うので，株主または社員が会社の債務について会社債権者に対して直接に責任を負うことはない。","ans":false,"exp":"合名・合資会社の無限責任社員，合資会社の有限責任社員は，直接責任を負う（580条）。","diff":"A"},{"no":22,"topic":"会社法総論","q":"会社による政治資金の寄附は，客観的，抽象的に観察して，会社の社会的役割を果たすためになされたものと認められるかぎりにおいては，会社の定款所定の目的の範囲内の行為であるとするのが判例である。","ans":true,"exp":"最判昭和45年6月24日。","diff":"B"},{"no":23,"topic":"株式会社の意義と特色","q":"株主の責任は，その有する株式の引受価額を限度とする。","ans":true,"exp":"株主有限責任の原則（104条）である。","diff":"A"},{"no":24,"topic":"株式会社の意義と特色","q":"株主は，会社に対して一定額の出資義務を負うだけで，会社債権者に対しては何ら責任を負わない。","ans":true,"exp":"株主の間接有限責任（104条）の内容である。","diff":"A"},{"no":25,"topic":"株式会社の意義と特色","q":"株主は，会社に対する出資義務をまだ履行していない場合には，例外的に会社債権者に対して直接責任を負う場合がある。","ans":false,"exp":"発起人や株式引受人が出資義務を履行していない場合は，そもそも「株主」になれないので（36条3項，63条3項，208条5項），株主が会社債権者に対して直接責任を負うことはない。","diff":"A"},{"no":26,"topic":"機関総説","q":"株式会社は，２人以上の取締役を置かなければならない。","ans":false,"exp":"取締役会非設置会社であれば，1人でもよい（326条1項）。","diff":"A"},{"no":27,"topic":"機関総説","q":"公開会社，監査役会設置会社，監査等委員会設置会社及び指名委員等設置会社は，必ず取締役会を設置しなければならない。","ans":true,"exp":"327条1項1号2号3号4号。例外はない。","diff":"A"},{"no":28,"topic":"機関総説","q":"監査役会設置会社の取締役は，３人以上でなければならない。","ans":true,"exp":"監査役会設置会社は取締役会の設置が強制される（327条1項2号）。そして，取締役会設置会社は取締役が3人以上でなければならない（331条5項）。","diff":"A"},{"no":29,"topic":"機関総説","q":"取締役会設置会社は，常に，公開会社である。","ans":false,"exp":"公開会社は常に取締役会設置会社であるが（327条1項1号），取締役会設置会社だからといって公開会社とは限らない。","diff":"A"},{"no":30,"topic":"機関総説","q":"大会社では，必ず取締役会を置かなければならない。","ans":false,"exp":"大会社でも，非公開会社であれば，取締役会を置かない機関設計も認められる。","diff":"A"},{"no":31,"topic":"機関総説","q":"取締役会を置かない会社では，監査役会，監査等委員会又は指名委員会等を置くことはできない。","ans":true,"exp":"327条1項2号3号4号。","diff":"A"},{"no":32,"topic":"機関総説","q":"会社法の規定により取締役会を置かなければならない会社は，定款において取締役会を置く旨の定めを設ける必要はない。","ans":false,"exp":"その場合でも，定款に定める必要がある（326条2項）。","diff":"B"},{"no":33,"topic":"機関総説","q":"指名委員会等設置会社は，定款に，指名委員会，監査委員会及び報酬委員会を置く旨を定めなければならない。","ans":true,"exp":"指名委員会等設置会社は指名委員会等を置く株式会社であるが（2条12号），指名委員会等を置く旨を定款に定める必要がある（326条2項）。","diff":"B"},{"no":34,"topic":"機関総説","q":"監査等委員会設置会社及び指名委員等設置会社でない公開会社は，監査役を置かなければならない。","ans":true,"exp":"公開会社は取締役会の設置が強制され（327条1項1号），取締役会設置会社は監査等委員会設置会社および指名委員会等設置会社を除き，原則として（公開会社の場合は原則どおり）監査役の設置が強制される（327条2項）。","diff":"A"},{"no":35,"topic":"機関総説","q":"公開会社でない取締役会設置会社は，監査等委員会設置会社及び指名委員会等設置会社である場合を除いて，常に監査役を置かなければならない。","ans":false,"exp":"取締役会設置会社は，監査等委員会設置会社および指名委員会等設置会社を除いて，監査役を設置しなければならない（327条2項本文）。ただし，非公開会社（かつ非大会社）は，会計参与を置けば，監査役を置かなくてよい（同項ただし書，なお328条2項，327条3項参照）。","diff":"A"},{"no":36,"topic":"機関総説","q":"取締役会設置会社でない株式会社（大会社を除く。）は，監査役を置かないことができる。","ans":true,"exp":"取締役会設置会社は，監査等委員会設置会社および指名委員会等設置会社を除いて，監査役の設置義務がある（327条2項本文）。したがって，取締役会非設置会社を前提とすれば，監査役の設置義務がない余地がある。ただし，大会社は常に会計監査人の設置義務があり（328条1項2項），会計監査人設置会社は取締役会非設置会社でも監査役の設置義務がある（327条3項）ので，大会社は除く必要がある。","diff":"B"},{"no":37,"topic":"機関総説","q":"大会社は，取締役会設置会社以外の会社であっても，監査役会を置かなければならない。","ans":false,"exp":"大会社でも，非公開会社（取締役会非設置会社は常に非公開会社）は，監査役会の設置は強制されない（328条1項2項参照）。","diff":"B"},{"no":38,"topic":"機関総説","q":"大会社である公開会社（監査等委員会設置会社及び指名委員等設置会社を除く。）は，監査役会を置かなければならない。","ans":true,"exp":"大会社かつ公開会社では，監査等委員会設置会社・指名委員会等設置会社を除いて，監査役会及び会計監査人を置かなければならない（328条1項）。","diff":"A"},{"no":39,"topic":"機関総説","q":"大会社は，会計監査人を置かなければならない。","ans":true,"exp":"328条2項。大会社は常に会計監査人を置かなければならない（同条1項2項）。なお，監査等委員会設置会社・指名委員会等設置会社は，それだけで会計監査人を置かなければならない（327条5項）。","diff":"A"},{"no":40,"topic":"機関総説","q":"公開会社でない大会社（監査等委員会設置会社及び指名委員等設置会社を除く。）は，会計監査人を置かなくてもよい。","ans":false,"exp":"大会社は常に会計監査人を置かなければならない（328条1項2項）。なお，監査等委員会設置会社・指名委員会等設置会社は，それだけで会計監査人を置かなければならない（327条5項）。","diff":"A"},{"no":41,"topic":"機関総説","q":"会計参与を置く大会社（公開会社，監査役会設置会社，監査等委員会設置会社及び指名委員会等設置会社を除く。）は，会計監査人を置かないことができる。","ans":false,"exp":"大会社は例外なく会計監査人の設置が強制される（328条1項2項）。","diff":"A"},{"no":42,"topic":"機関総説","q":"大会社でない監査役設置会社は，定款の定めによって，会計監査人を置くことができる。","ans":true,"exp":"大会社・監査等委員会設置会社・指名委員会等設置会社は，会計監査人の設置が強制される（328条1項2項，327条5項）。それ以外の会社も任意に会計監査人を設置できるが，監査役の設置が前提（327条3項）。","diff":"B"},{"no":43,"topic":"機関総説","q":"会計監査人設置会社（監査等委員会設置会社及び指名委員会等設置会社を除く。）は，監査役を置かなければならない。","ans":true,"exp":"会計監査人設置会社では，監査等委員会設置会社・指名委員会等設置会社を除いて，監査役の設置が強制される（327条3項）。","diff":"A"},{"no":44,"topic":"機関総説","q":"大会社では，監査等委員会設置会社及び指名委員等設置会社を除いて，監査役を置かなければならない。","ans":true,"exp":"328条2項。大会社は会計監査人の設置が強制され，会計監査人設置会社は監査役の設置が強制される（327条3項）。","diff":"A"},{"no":45,"topic":"機関総説","q":"指名委員会等設置会社は，取締役会及び会計監査人を置かなければならない。ただし，公開会社でなく，かつ大会社でないものについては，この限りでない。","ans":false,"exp":"指名委員会等設置会社は，常に取締役会と会計監査人の設置が強制される（327条1項4号5項）。例外はない。","diff":"A"},{"no":46,"topic":"機関総説","q":"監査等委員会設置会社及び指名委員等設置会社は，定款の定めによっても，監査役を置くことはできない（327条4項）。","ans":true,"exp":"327条4項。","diff":"A"},{"no":47,"topic":"機関総説","q":"監査等委員会設置会社は，会計監査人を置かなければならない。","ans":true,"exp":"327条5項。","diff":"A"},{"no":48,"topic":"機関総説","q":"監査等委員会設置会社は，公開会社でない株式会社であっても，会計監査人を置かなければならない。","ans":true,"exp":"監査等委員会設置会社は，公開会社か否かを問わず，会計監査人の設置義務がある（327条5項）。","diff":"A"},{"no":49,"topic":"機関総説","q":"指名委員会等設置会社は，常に，会計監査人設置会社である。","ans":true,"exp":"327条5項。","diff":"A"},{"no":50,"topic":"機関総説","q":"公開会社でなく，かつ大会社でない監査等委員会設置会社は，会計監査人を置かなくてもよい。","ans":false,"exp":"監査等委員会設置会社は，常に会計監査人の設置が強制される（327条5項）。例外はない。","diff":"A"},{"no":51,"topic":"機関総説","q":"指名委員会等設置会社は，監査等委員会を置いてはならない。","ans":true,"exp":"327条6項。","diff":"A"},{"no":52,"topic":"機関総説","q":"会計監査人設置会社は，常に，取締役会設置会社である。","ans":false,"exp":"そのような規制はない（327条1項参照）。","diff":"B"},{"no":53,"topic":"機関総説","q":"公開会社でない株式会社は，大会社でない場合には，指名委員会等を置くことができない。","ans":false,"exp":"指名委員会等設置会社は，あらゆる類型で認められる。","diff":"B"},{"no":54,"topic":"機関総説","q":"公開会社でない大会社は，指名委員会等を置いてはならない。","ans":false,"exp":"指名委員会等設置会社は，あらゆる類型で認められる。","diff":"B"},{"no":55,"topic":"機関総説","q":"公開会社でない株式会社は，大会社でない場合には，監査等委員会を置くことができない。","ans":false,"exp":"監査等委員会設置会社は，あらゆる類型で認められる。","diff":"B"},{"no":56,"topic":"機関総説","q":"監査等委員会設置会社及び指名委員会等設置会社は，定款の定めによっても，会計参与を設置することができない。","ans":false,"exp":"会計参与の設置は任意である。監査等委員会設置会社や指名委員会等設置会社も（定款の定めにより）会計参与を設置できる（399条の2第3項1号，404条2項1号参照）。","diff":"A"},{"no":57,"topic":"機関総説","q":"会計参与設置会社は，常に，取締役会設置会社である。","ans":false,"exp":"会計参与の設置は（327条2項ただし書を除き）任意である。","diff":"A"},{"no":58,"topic":"機関総説","q":"公開会社でない大会社は，会計参与を置いてはならない。","ans":false,"exp":"会計参与の設置は（327条2項ただし書を除き）任意である。","diff":"A"},{"no":59,"topic":"機関総説","q":"取締役会設置会社以外の株式会社は，会計参与を設置することができない。","ans":false,"exp":"会計参与の設置は（327条2項ただし書を除き）任意である。","diff":"A"},{"no":60,"topic":"機関総説","q":"公開会社でない監査役設置会社は，定款の定めによって，会計参与を置くことができない。","ans":false,"exp":"会計参与の設置は（327条2項ただし書を除き）任意である。","diff":"A"},{"no":61,"topic":"機関総説","q":"会計監査人設置会社は，定款の定めによって会計参与を置くことができる。","ans":true,"exp":"会計参与の設置は（327条2項ただし書を除き）任意である。","diff":"A"},{"no":62,"topic":"株主総会(1)","q":"取締役会設置会社でない会社の株主総会は，会社法に規定する事項および定款で定めた事項に限り，決議をすることができる。","ans":false,"exp":"取締役会非設置会社の株主総会は，万能機関性を有し，会社法に規定する事項および株式会社の組織，運営，管理その他株式会社に関する一切の事項について決議できる（295条1項）。","diff":"A"},{"no":63,"topic":"株主総会(1)","q":"取締役会設置会社における株主総会は，会社法に規定する事項及び株式会社の組織，運営，管理その他株式会社に関する一切の事項について決議をすることができる。","ans":false,"exp":"取締役会設置会社では，株主総会は会社法・定款で定めた事項に限って決議できる（295条2項）。","diff":"A"},{"no":64,"topic":"株主総会(1)","q":"会社法の規定により株主総会の決議を必要とする事項について，取締役，執行役，取締役会その他の株主総会以外の機関が決定することができることを内容とする定款の定めは，その効力を有しない。","ans":true,"exp":"295条3項。株主総会の権限は下位機関に委譲できない。","diff":"A"},{"no":65,"topic":"株主総会(1)","q":"取締役会設置会社においては，株主が招集する場合を除き，株主総会の招集の際に定めるべき事項の決定は，取締役会の決議によらなければならない。","ans":true,"exp":"取締役会設置会社では，株主が株主総会を招集する場合（297条4項）を除き，取締役会決議で日時・場所・議題等の株主総会招集事項（298条1項各号）を決定する（298条4項，取締役会専決事項）。","diff":"A"},{"no":66,"topic":"株主総会(1)","q":"公開会社が定時株主総会の招集の通知を書面でする場合において，当該定時株主総会の日が前事業年度に係る定時株主総会の日に応当する日と著しく離れた日であるときは，その日時を決定した理由を当該書面に記載しなければならない。","ans":true,"exp":"299条4項，298条1項5号，会社法施行規則63条1号イ。","diff":"C"},{"no":67,"topic":"株主総会(1)","q":"公開会社の株主総会において，１人の株主が同一の議案につき書面と電磁的方法により重複して議決権の行使をした場合において，当該同一の議案に対する議決権の行使の内容が異なるものであるときにおける当該株主に対する議決権の行使の取扱いに関する事項を，取締役会は，株主総会の招集の決定に際して定めることができる。","ans":true,"exp":"298条1項5号4項。取締役会は，株主総会招集事項として，例えば「書面投票と電子投票で議決権の行使の内容が異なる場合，書面投票による議決権の行使を優先するものとする」といった事項を定めることができる。","diff":"C"},{"no":68,"topic":"株主総会(1)","q":"株式会社が，代理人による議決権の行使について，代理権を証明する方法を定めたときは，当該株式会社は，当該事項を株主総会の招集通知に記載し，又は記録しなければならない。なお，定款に別段の定めはないものとする。","ans":true,"exp":"総会の招集に際し，議決権の代理行使について，代理権（代理人の資格を含む）を証明する方法，代理人の数などを定めた場合は，定款に定めがある場合を除き，当該事項を総会の招集通知に記載・記録しなければならない（299条4項，298条1項5号，会社法施行規則63条5号）。","diff":"C"},{"no":69,"topic":"株主総会(1)","q":"公開会社において，総株主の議決権の100分の3以上の議決権を6か月前から引き続き有する株主は，株主総会の目的である事項を定めることなく，自ら株主総会を招集することができる。","ans":false,"exp":"株主が株主総会の招集を請求するには，取締役に株主総会の目的である事項（当該株主が議決権を行使できる事項に限る）および招集の理由を示さなければならず，また，まずは招集を請求する必要があり，いきなり招集できるわけではなく，さらに招集には裁判所の許可が必要となる（297条1項4項）。","diff":"A"},{"no":70,"topic":"株主総会(1)","q":"取締役会設置会社以外の株式会社（種類株式発行会社を除く。）においては，総株主の議決権の100分の3以上の議決権を有する株主は，取締役役に対し，株主総会の目的である事項及び招集の理由を示して，株主総会の招集を請求することができる。","ans":true,"exp":"株主による株主総会招集請求権は，少数株主権である（297条1項）。なお，取締役会非設置会社は常に非公開会社だから（327条1項1号参照），6か月の保有期間要件は要求されない（297条2項）。","diff":"A"},{"no":71,"topic":"株主総会(1)","q":"取締役役に対し株主総会の招集を請求することができる株主が，自ら株主総会を招集する場合には，裁判所の許可を必要としない。","ans":false,"exp":"株主は一定の場合は株主総会を自ら招集できるが，それには裁判所の許可が必要である（297条4項）。","diff":"A"},{"no":72,"topic":"株主総会(1)","q":"株主が取締役役に対し適法に株主総会の招集を請求したにもかかわらず，遅滞なく招集の手続が行われない場合には，当該株主は，裁判所の許可を得て，株主総会を招集することができる。","ans":true,"exp":"297条4項1号。なお，株主による株主総会招集請求・招集権は少数株主権であるが（同条1項），問題文に「適法に」招集請求をしたとある以上，持株要件等はみたしていると読んでよい。","diff":"A"},{"no":73,"topic":"株主総会(1)","q":"株主総会は，定款に別段の定めがある場合を除き，本店の所在地またはそれに隣接する地に招集しなければならない。","ans":false,"exp":"平成17年会社法で，総会の招集場所に関する規制は廃止された。","diff":"B"},{"no":74,"topic":"株主総会(1)","q":"取締役会設置会社の株主は，その有する株式の数にかかわらず，取締役役に対し，一定の事項を株主総会の目的とすることを請求することができる。","ans":false,"exp":"取締役会設置会社では，議題提案権は少数株主権である（303条2項3項）。","diff":"A"},{"no":75,"topic":"株主総会(1)","q":"公開会社では，株主が，取締役役に対し，一定の事項を株主総会の目的とすることを請求するには，当該株主は，総株主の議決権の100分の1以上の議決権又は300個以上の議決権を6か月前から引き続き有する株主でなければならない。","ans":true,"exp":"公開会社（→取締役会設置会社，327条1項1号）では，議題提案権は，少数株主権であり，保有期間要件がある（303条2項）。","diff":"A"},{"no":76,"topic":"株主総会(1)","q":"取締役会設置会社以外の株式会社では，6か月前から引き続き株式を有する株主であれば，１個の議決権しか有していない株主であっても，取締役役に対し，当該株主が議決権を行使できる事項を株主総会の目的とすることを請求することができる。","ans":false,"exp":"「6か月前から〜」の部分が誤り。取締役会非設置会社では，議題提案権は単独株主権であり（303条1項）株主は１個の議決権を有していればよく，保有期間要件も要求されていない。","diff":"A"},{"no":77,"topic":"株主総会(1)","q":"種類株式発行会社でない公開会社（指名委員会等設置会社を除く。）が招集する株主総会に関し，株主が一定の事項を株主総会の会議の目的とすることを株式会社に適法に請求した場合には，当該株式会社の代表取締役役は当該事項を議題として当該株主総会の招集通知に記載し，又は記録しなければならない。","ans":true,"exp":"株主の議題提案権（303条1項2項）が適法に行使された場合は，代表取締役役は当該事項を議題として招集通知に記載・記録しなければならない（299条4項，298条1項2号）。","diff":"A"},{"no":78,"topic":"株主総会(1)","q":"種類株式発行会社でない公開会社（指名委員会等設置会社を除く。）が招集するある株主総会において，一定の事項を株主総会の会議の目的とすることを株式会社に適法に請求した株主が当該株主総会に出席しなかった場合には，当該株主総会において，当該事項を会議の目的とすることができない。","ans":false,"exp":"問題文のような規定はない。したがって，ある株主によって議題提案権（303条1項2項）が適法に行使された場合は，当該株主が当該総会に欠席したときでも，当該総会において当該事項を議題とする必要がある。","diff":"B"},{"no":79,"topic":"株主総会(1)","q":"株主は，事前に通知等をしていなくても，株主総会の会場で，会議の目的事項について，代表取締役が提出した議案に対し，修正提案をすることができる。","ans":true,"exp":"株主総会における議案提案権である（304条本文）。なお，例外はある（同条ただし書）。","diff":"A"},{"no":80,"topic":"株主総会(1)","q":"種類株式発行会社でない公開会社（指名委員会等設置会社を除く。）が招集する株主総会に関し，株主が，株主総会において株主総会の目的である事項につき議案を提出するには，当該株主は，1株以上の株式を6箇月前から引き続き保有していなければならない。","ans":false,"exp":"株主総会における議案提案権（304条）は，単独株主権であり，保有期間要件もない。","diff":"A"},{"no":81,"topic":"株主総会(1)","q":"種類株式発行会社でない公開会社（指名委員会等設置会社を除く。定款に別段の定めはないものとする。）が招集するある株主総会において，株主の提案した議案が総株主の議決権の10分の1以上の賛成を得られなかった場合には，当該株主を含む株主は，当該議案と実質的に同一の議案を次の事業年度に関する定時株主総会において提出することができない。","ans":true,"exp":"当該議案が法令・定款に違反する場合または実質的に同一議案につき総株主の議決権の10分の1（定款で緩和可）以上の賛成を得られなかった総会から3年を経過していない場合は，総会における議案提案権は認められない（304条ただし書）。","diff":"B"},{"no":82,"topic":"株主総会(1)","q":"株主は，株主総会において，当該株主総会の目的である事項について自らが議決権を行使することができない場合には，当該事項について議案を提出することができない。","ans":true,"exp":"304条本文かっこ書。株主提案権すべてについて，当該株主が議決権を行使できる事項に限定されている。","diff":"A"},{"no":83,"topic":"株主総会(1)","q":"取締役会設置会社でない株式会社では，1個以上の議決権を有する株主は，取締役に対し，株主総会の日の8週間（これを下回る期間を定款で定めた場合はその期間）前までに，株主総会の目的である事項（当該株主が議決権を行使することができる事項に限る。）につき当該株主が提出しようとする議案の要領を株主に通知すること（株主総会の招集通知を書面または電磁的方法で行う場合は，その通知に記載または記録すること）を請求することができる。","ans":true,"exp":"取締役会非設置会社では，議案要領通知請求権は単独株主権である（305条1項本文）。","diff":"A"},{"no":84,"topic":"株主総会(1)","q":"公開会社でない取締役会設置会社においては，総株主の議決権の100分の1以上の議決権又は300個以上の議決権を有する株主は，取締役に対し，株主総会の目的である事項につき当該株主が提出しようとする議案の要領を株主に通知することを請求することができる。","ans":true,"exp":"取締役会設置会社では，議案要領通知請求権は少数株主権である（305条1項ただし書2項）。","diff":"A"},{"no":85,"topic":"株主総会(1)","q":"取締役会設置会社の株主の議案要領通知請求権に関し，10を超える数に相当する議案であることを理由に，その要領を株主総会の招集通知に記載することを取締役が拒むことができるかを判断する場合において，2人の会計監査人を再任しないことに関する議案は，2個の議案とみなされる。","ans":false,"exp":"会計監査人の不再任に関する議案は，当該議案の数にかかわらず，不再任につき1議案とみなす（305条4項3号）。","diff":"A"},{"no":86,"topic":"株主総会(1)","q":"取締役会設置会社の株主の議案要領通知請求権に関し，10を超える数に相当する議案であることを理由に，その要領を株主総会の招集通知に記載することを取締役が拒むことができるかを判断する場合において，指名委員等を設置する旨の定款の定めを廃止する議案及び監査等委員会を設置する旨の定款の定めを設ける議案は，1個の議案とみなされる。","ans":true,"exp":"当該2以上の議案について仮に異なる決議がされると当該議案の内容が相互に矛盾する可能性がある場合は，これらを1議案とみなす（305条4項後段4号）。問題文は，仮に異なる議決（「指名委員等を廃止する定款変更」議案が否決され「監査等委員会を設置する定款変更」議案が可決）がされると相互に矛盾する可能性があるから（指名委員等設置会社は監査等委員会を置いてはならない，327条6項），1議案と扱われる。","diff":"A"},{"no":87,"topic":"株主総会(1)","q":"取締役会設置会社の株主の議案要領通知請求権に関し，株主が，10を超える数の議案について，その要領を株主総会の招集通知に記載するように請求した場合には，取締役は，当該株主の意向にかかわらず，10を超える数に相当することとなる数の議案を定め，その記載を拒むことができる。","ans":false,"exp":"どの部分が10を超える数に相当することとなる数の議案にあたるかは，株主が当該請求と併せて議案相互間の優先順位を定めている場合（この場合は取締役役は当該優先順位に従いこれを定める）を除き，取締役が定める（305条5項）。","diff":"B"},{"no":88,"topic":"株主総会(1)","q":"取締役会設置会社の株主の議案要領通知請求権に関し，株主が提出しようとする議案と実質的に同一の議案が株主総会において総株主の議決権の10分の1以上の賛成を得られなかった日から3年を経過していない場合には，取締役は，その要領を株主総会の招集通知に記載することの請求を拒むことができる。","ans":true,"exp":"ある議案が法令・定款に違反する場合または実質的に同一議案につき総株主の議決権の10分の1（定款で緩和可）以上の賛成を得られなかった総会から3年を経過していない場合は，当該議案につき議案要領通知請求権は認められない（305条6項）。","diff":"B"},{"no":89,"topic":"株主総会(1)","q":"株主総会の招集通知は，その株主総会において決議をすることができる事項の全部につき議決権を行使することができない株主に対しても，これを送付しなければならない。","ans":false,"exp":"総会決議事項の全部について議決権を行使できない株主には，招集通知を発する必要はない（299条1項，298条2項かっこ書）。出席の機会を与える必要がないからである。","diff":"A"},{"no":90,"topic":"株主総会(1)","q":"定款に単元株式数を定める株式会社において，取締役が株主総会を招集するには，取締役は，招集手続の省略が認められる場合を除き，単元未満株主であって単元株式数となる数の株式を有しないものに対してもその通知を発しなければならない。","ans":false,"exp":"総会決議事項の全部について議決権を行使できない株主には，招集通知を発する必要はない（299条1項，298条2項かっこ書）。単元未満株しか有しない株主には議決権はない（189条1項）。したがって，当該株主には招集通知を発する必要はない。","diff":"A"},{"no":91,"topic":"株主総会(1)","q":"株主総会に出席しない株主が書面によって議決権を行使することができることとする旨を定めた場合は，株式会社は，株主（株主総会において決議をすることができる事項の全部につき議決権を行使することができない株主を除く。）の全員の同意があれば，招集の手続を省略して株主総会を開催することができる。","ans":false,"exp":"書面投票や電子投票を定めた場合は，たとえ議決権を有する株主全員の同意があっても，招集手続の省略は認められない（300条ただし書）。","diff":"B"},{"no":92,"topic":"株主総会(1)","q":"公開会社でない株式会社が，株主総会の招集通知を当該株主総会の日の1週間前までに発するものとするには，その旨を定款で定めなければならない。","ans":false,"exp":"非公開会社は，書面投票・電子投票制度を定めていない場合は，会日の1週間前でよく，これを定款に定める必要はない（299条1項かっこ書）。ただし，この会社のうち取締役会非設置会社は「定款」で1週間を下回る期間を定めてもよい（同条項かっこ書）。","diff":"B"},{"no":93,"topic":"株主総会(1)","q":"取締役会設置会社以外の株式会社は，定款に定めを置くことにより，株主総会の招集通知を発すべき日から当該株主総会の日までの期間を1週間未満とすることができる。","ans":true,"exp":"取締役会非設置会社では，書面投票・電子投票制度を定めていない場合（問題文に記載がない場合はそのように考えてよい），定款に定めを置けば，1週間を下回る期間を定めてもよい（299条1項かっこ書）。","diff":"A"},{"no":94,"topic":"株主総会(1)","q":"取締役会設置会社でない株式会社の取締役は，株主総会に出席しない株主が電磁的方法によって議決権を行使することができる旨を定めた場合には，株主に対し，株主総会の招集の通知を株主総会の日の2週間前までに発しなければならない。","ans":true,"exp":"取締役会非設置会社でも，書面投票・電子投票制度を定めた場合は，原則どおり，株主総会の招集通知は株主総会の日の2週間前までに発しなければならない（299条1項かっこ書）。","diff":"A"},{"no":95,"topic":"株主総会(1)","q":"株主総会に出席しない株主が電磁的方法によって議決権を行使することができる場合は，株主総会の招集の通知は，電磁的方法によりこれを発する場合を除き，書面でしなければならない。","ans":true,"exp":"招集通知は，書面投票・電子投票による議決権行使を定めた場合は，株主の承諾を得て電磁的方法で発するときを除き，書面でしなければならない（299条2項1号3項）。","diff":"A"},{"no":96,"topic":"株主総会(1)","q":"公開会社は，株主総会の招集の通知を，任意の方法たとえば口頭によって行うことができる。","ans":false,"exp":"公開会社は取締役会設置会社である（327条1項1号）。取締役会設置会社では，株主総会の招集通知は，株主の承諾を得て電磁的方法で発する場合を除き，書面でしなければならない（299条2項2号3項）。","diff":"A"},{"no":97,"topic":"株主総会(1)","q":"取締役会設置会社以外の株式会社では，株主総会に出席しない株主が書面又は電磁的方法によって議決権を行使することができる旨を定めていないときは，当該株主総会の招集の通知を書面又は電磁的方法以外の方法ですることができる。","ans":true,"exp":"取締役会非設置会社では，書面投票・電子投票制度を採用しない場合は，株主総会の招集通知は（書面・電磁的方法でなく）口頭や電話などでもよい（299条2項3項参照）。","diff":"A"},{"no":98,"topic":"株主総会(1)","q":"取締役会設置会社でない会社の定時株主総会の招集通知には，総会の日時，場所および会議の目的である事項が含まれていなければならないが，計算書類の添付は不要である。","ans":false,"exp":"取締役会非設置会社では，総会の日時・場所は必要だが，議題は不要である。なお，計算書類の添付は不要である（437条参照）。","diff":"A"},{"no":99,"topic":"株主総会(1)","q":"当該株主総会において議決権を行使することができる株主の議決権の過半数を有する株主が，招集手続の省略に同意した場合には，招集の手続を経ることなく株主総会を開催することができる。","ans":false,"exp":"招集手続を省略するためには，「株主の全員の同意」が必要（300条本文）。","diff":"A"},{"no":100,"topic":"株主総会(1)","q":"株主総会に出席しない株主が書面によって議決権を行使することができることとする旨を定めた場合は，株式会社は，株主（株主総会において決議をすることができる事項の全部につき議決権を行使することができない株主を除く。）の全員の同意があれば，招集の手続を省略して株主総会を開催することができる。","ans":false,"exp":"書面投票や電子投票を定めた場合は，たとえ議決権を有する株主全員の同意があっても，招集手続の省略は認められない（300条ただし書）。","diff":"B"},{"no":101,"topic":"株主総会(1)","q":"株主総会に出席しない株主が電磁的方法によって議決権を行使することとする旨を定めた場合には，株主（株主総会において決議をすることができる事項の全部につき議決権を行使することができない株主を除く。）の全員の同意があるときには，株主総会は，招集の手続を経ることなく開催することができる。","ans":false,"exp":"書面投票や電子投票を定めた場合は，たとえ議決権を有する株主全員の同意があっても，招集手続の省略は認められない（300条ただし書）。","diff":"B"},{"no":102,"topic":"株主総会(1)","q":"最高裁判所の判例の趣旨によれば，招集権者による株主総会の招集の手続を欠く場合に，株主の全員が，その開催に同意して出席をしたとしても，単純な株主の会合にとどまり，当該会合でなされた決定は，株主総会の決議として有効に成立するとは認められない。","ans":false,"exp":"招集権者による株主総会の招集がない場合等でも，株主『全員』が『開催に同意』して『出席』している場合は，全員出席総会として株主総会は適法に成立する（決議は有効となる）。","diff":"A"},{"no":103,"topic":"株主総会(1)","q":"最高裁判所の判例の趣旨によれば，株主総会の招集権者による招集の手続を欠く場合において，株主全員が出席して議決をしたときは，株主の一部がその開催に同意していない場合であっても，当該決議は有効に成立する。","ans":false,"exp":"招集権者による株主総会の招集がない場合等でも，株主『全員』が『開催に同意』して『出席』していれば，全員出席総会として株主総会は適法に成立する（判例）。しかし，株主の一部でも開催に同意していない場合は，株主全員が出席して決議しても，当該株主総会における当該決議は無効となる。","diff":"B"},{"no":104,"topic":"株主総会(2)","q":"株式会社は，自己株式について議決権を有する。","ans":false,"exp":"会社は保有する自己株式については議決権を有しない（308条2項）。","diff":"A"},{"no":105,"topic":"株主総会(2)","q":"甲株式会社が乙株式会社の総株主の議決権の4分の1以上を有する株主である場合には，乙株式会社は，その有する甲株式会社の株式について議決権を有しない。","ans":true,"exp":"相互保有株式の議決権制限である（308条1項かっこ書）。","diff":"A"},{"no":106,"topic":"株主総会(2)","q":"株主は，株主総会において，代理人によって議決権を行使することはできない。","ans":false,"exp":"代理人による議決権の行使も認められる（310条1項）。","diff":"A"},{"no":107,"topic":"株主総会(2)","q":"取締役会設置会社以外の会社では，株主の株主総会における議決権代理行使について，取締役は，代理人による議決権の行使を認めない旨を定めることができる。","ans":false,"exp":"議決権の代理行使（310条）を否定する定款規定は，会社の類型を問わず，無効である。","diff":"A"},{"no":110,"topic":"株主総会(2)","q":"会社法上，株主は，代理人によってその議決権を行使することができるが，株式会社は，株主総会に出席することができる代理人の数を制限することができる。","ans":true,"exp":"310条5項。多数の代理人が出席することによって議事が混乱するのを防止する趣旨である。","diff":"B"},{"no":111,"topic":"株主総会(2)","q":"議決権行使の代理権を証明する書面が株式会社に提出されたときは，当該株式会社は，株主総会の日から3箇月間，当該書面を本店に備え置かなければならない。","ans":true,"exp":"310条6項。株主（当該総会における決議事項全部につき議決権を行使できない株主は除く）の閲覧・謄写に供される（同条7項）。","diff":"B"},{"no":112,"topic":"株主総会(2)","q":"株式会社の株主は，株主総会において決議をした事項の全部につき議決権を行使することができない者を除き，当該株式会社の営業時間内は，いつでも，請求の理由を明らかにして，議決権の代理行使における代理権を証明する書面の閲覧又は謄写の請求をすることができる。","ans":true,"exp":"代理人が提出した議決権行使の代理権を証する書面・記録は，総会終結後3か月間本店に備え置かれ（310条6項），株主（当該総会における決議事項全部につき議決権を行使できない株主は除く）の閲覧・謄写に供される（同条7項）。","diff":"B"},{"no":113,"topic":"株主総会(2)","q":"株主が代理権を証明する書面の閲覧又は謄写の請求をした場合に，当該株主が株式会社の業務と実質的に競争関係にある事業を営んでいるときには，当該株式会社は当該請求を拒むことができる。","ans":false,"exp":"株主の代理権証明書面の閲覧謄写請求には，会社側の請求拒否事由が定められているが（310条8項各号），左記事由は含まれていない。株主名簿閲覧謄写請求権の場合（125条3項）等と同様である。","diff":"B"},{"no":114,"topic":"株主総会(2)","q":"最高裁判所の判例の趣旨によれば，議決権を行使する代理人の資格を株主に制限する旨の定款の規定は，株主総会が，株主以外の第三者によって攪乱されることを防止し，会社の利益を保護する趣旨に出たものと認められ，合理的な理由による相当程度の制限ということができるから，有効である。","ans":true,"exp":"代理人資格を株主に限定する定款規定も有効である（判例）。ただし，総会屋等による総会の攪乱のおそれがなく，代理人である非株主に議決権の代理行使を認める合理的理由がある場合は，当該定款規定の適用が排除される（無効になるわけではない）（判例）。","diff":"A"},{"no":115,"topic":"株主総会(2)","q":"最高裁判所の判例によれば，法人株主が株主でない職員又は従業員に議決権を代理行使させた場合，当該職員又は従業員が当該法人株主の組織の一員として上司の命令に服する義務を負い，議決権の代理行使に当たっても当該法人株主の代表者の意図に反することができないようになっているときは，代理人の資格を株主に限定する定款の規定には反しない。","ans":true,"exp":"代理人資格を株主に限定する定款規定も有効である（判例）。ただし，総会屋等による総会の攪乱のおそれがなく，代理人である非株主（問題文のような場合）は，当該定款規定の適用が排除される（無効になるわけではない）（判例）。","diff":"A"},{"no":116,"topic":"株主総会(2)","q":"株主の株主総会（取締役が招集するものに限る。）における議決権行使について，株主数が1000人未満の会社は，株主総会に出席しない株主に対して，書面によって議決権を行使する機会を与える必要はない。","ans":true,"exp":"書面投票（298条1項3号）は，総会決議事項全部につき議決権を行使できない株主を除き，株主数が1000人以上の会社は原則採用強制だが（同条2項），それ以外は任意。","diff":"A"},{"no":117,"topic":"株主総会(2)","q":"公開会社の株主の数が1000人以上である場合には，当該公開会社の取締役が株主の全部に対して金融商品取引法の規定に基づいて株主総会の通知に際して委任状の用紙を交付することにより議決権の行使を第三者に代理させることを勧誘しているときを除き，取締役会は，株主総会に出席しない株主が書面によって議決権を行使することができる旨を定めなければならない。なお，株主総会において決議をすることができる事項の全部につき議決権を行使することができない株主は存在しないものとする。","ans":true,"exp":"書面投票制度の採用は原則として任意であるが，株主（株主総会決議事項の全部について議決権を行使できない株主を除く）の数が1000人以上の会社は，書面投票制度の採用が原則として強制される（298条2項本文）。ただし，当該会社が上場会社であって株式の全部に対して金商法の規定に基づき委任状勧誘をした会社である場合は，例外的に書面投票制度の採用は強制されない（298条2項ただし書，会社法施行規則64条，金商法194条・同法施行令36条の2）。","diff":"A"},{"no":118,"topic":"株主総会(2)","q":"株主総会に出席しない株主が電磁的方法によって議決権を行使することができる場合は，株主の数が1000人以上である場合であっても，株主総会の招集の決定において，書面による議決権の行使に関する事項を定めることを要しない。なお，金融商品取引所に上場されている株式を発行する株式会社を除き，また，株主総会において決議をすることができる事項の全部につき議決権を行使することができない株主はいないものとする。","ans":false,"exp":"書面投票（298条1項3号）は，株主総会決議事項全部につき議決権を行使できない株主を除き，株主数が1000人以上の会社は原則として採用が強制される（同条2項）。電子投票（同条1項4号）が採用されている場合も，この規律に変更はない。","diff":"B"},{"no":119,"topic":"株主総会(2)","q":"株主（株主総会において決議をすることができる事項の全部につき議決権を行使することができない株主を除く。）の数が1000人以上である株式会社において，株主総会を招集する場合には，取締役役会は，株主総会に出席しない株主が電磁的方法によって議決権を行使することができる旨を定めなければならない。なお，金融商品取引所に上場されている株式を発行している株式会社を除くものとする。","ans":false,"exp":"株主総会決議事項全部につき議決権を行使できない株主を除き，株主数が1000人以上の会社に原則として採用が強制されるのは書面投票制度であり（298条2項），電子投票制度ではない。","diff":"B"},{"no":120,"topic":"株主総会(2)","q":"株式会社の取締役は，株主総会に出席しない株主が書面によって議決権を行使することができる旨を定めた場合には，当該株主総会の招集の通知に際して，株主に対し，株主総会参考書類及び議決権行使書面を交付しなければならない。なお，電磁的方法による通知は考慮しないものとする。","ans":true,"exp":"301条1項。なお，招集通知を電磁的方法で受領することを承諾した株主（299条3項参照）に対しては，議決権行使書面等に記載すべき事項を電磁的方法で提供すれば足り，議決権行使書面等の交付は不要であるが，株主から議決権行使書面等の交付請求があれば交付しなければならない（301条2項）。","diff":"B"},{"no":121,"topic":"株主総会(2)","q":"取締役が電磁的方法によって株主総会の招集通知を発することについて承諾した株主は，株主総会参考書類及び議決権行使書面に記載すべき事項が電磁的方法により提供された場合においても，株式会社に対し，これらの書類の交付を請求することができる。","ans":true,"exp":"株主総会の招集通知を電磁的方法で受領することを承諾した株主（299条3項参照）に対しては，議決権行使書面等に記載すべき事項を電磁的方法で提供すれば足り，議決権行使書面等の交付は不要であるが，株主から議決権行使書面等の交付請求があれば交付しなければならない（301条2項）。","diff":"B"},{"no":122,"topic":"株主総会(2)","q":"株主総会の招集の通知を発するに際して交付すべき議決権行使書面には，各議案についての賛否（賛成・反対）に加えて，棄権を記載する欄を設けることはできない。","ans":false,"exp":"議決権行使書面には，各議案についての賛否を記載する欄を設けることができるが（301条1項，会社法施行規則66条1項1号柱書），棄権を記載する欄を設けることができる（301条1項，会社法施行規則66条1号1号柱書）。","diff":"C"},{"no":123,"topic":"株主総会(2)","q":"株主総会における書面による議決権の行使に関し，各議案についての賛否を記載する欄に記載がない議決権行使書面が株式会社に提出された場合は，当該株式会社は，当該議案について棄権したものと取り扱わなければならず，これと異なる取扱いを定めることはできない。","ans":false,"exp":"賛否の記載がない場合は，当該議案について「賛成，反対又は棄権のいずれかの意思の表示があったものとする取扱い」が可能である（301条1項，会社法施行規則66条1項2号）。実務上は，たとえば会社提案の議案について賛否の記載がない場合は当該議案に賛成したものと取り扱うものが多い。","diff":"C"},{"no":124,"topic":"株主総会(2)","q":"株主総会における書面による議決権の行使に関し，株式会社は，株主総会の日から3か月間，当該株式会社に提出された議決権行使書面をその本店に備え置かなければならない。","ans":true,"exp":"311条3項。","diff":"B"},{"no":125,"topic":"株主総会(2)","q":"株主は，株式会社の営業時間内は，いつでも，その請求の理由を明らかにして，当該株式会社に提出された議決権行使書面の閲覧又は謄写の請求をすることができる。","ans":true,"exp":"311条4項。","diff":"A"},{"no":126,"topic":"株主総会(2)","q":"公開会社の債権者は，裁判所の許可を得て，当該公開会社の営業時間内は，いつでも，その請求の理由を明らかにして，当該公開会社に提出された議決権行使書面の閲覧又は謄写の請求をすることができる。","ans":false,"exp":"「債権者」を「株主」に変えて，「裁判所の許可を得て」を削除すれば，正しい（なお，公開会社でなくてもよい）。議決権行使書面の閲覧謄写請求権を有するのは「株主」だけである（311条4項）。","diff":"C"},{"no":127,"topic":"株主総会(2)","q":"株主総会決議事項のすべてについて議決権のない株式の種類株主は，株主総会の議決権行使書面の閲覧又は謄写の請求をすることができる。","ans":false,"exp":"株主は書面投票における議決権行使書面の閲覧謄写請求権を有するが（311条4項），総会決議事項全部につき議決権を行使できない株主は除く（310条7項柱書かっこ書）。","diff":"C"},{"no":128,"topic":"株主総会(2)","q":"電磁的方法による議決権の行使は，政令で定めるところにより，株式会社の承諾を得て，法務省令で定める時までに議決権行使書面に記載すべき事項を，電磁的方法により当該株式会社に提供して行う。","ans":true,"exp":"電子投票の行使方法である（312条1項）。","diff":"A"},{"no":129,"topic":"株主総会(2)","q":"株主（株主総会において決議をすることができる事項の全部につき議決権を行使することができない株主を除く。）の数が1000人以上の株式会社は，株主総会に出席しない株主が電磁的方法によって議決権を行使することができる旨を定めなければならない。","ans":false,"exp":"電子投票制度は，すべての会社において，採用するかどうかは任意である（298条1項4号）。","diff":"A"},{"no":130,"topic":"株主総会(2)","q":"株主の株主総会（取締役が招集するものに限る。）における議決権行使について，取締役が電磁的方法によって株主総会の招集通知を発することについて承諾した株主のみが，電磁的方法による議決権の行使をすることができる。","ans":false,"exp":"株主総会の招集通知を電磁的方法で発することには，株主の承諾が必要である（299条3項参照）。そして，この承諾をした株主からの電子投票の申出を会社は承諾しなければならない（312条2項）。しかし，それ以外の株主も，会社の承諾を得れば，電子投票ができる（同条1項）。","diff":"B"},{"no":131,"topic":"株主総会(2)","q":"株式会社の株主は，当該株式会社の総株主の議決権の100分の3以上の議決権を有する者でなければば，当該株式会社の承諾を得て電磁的方法により提供された議決権行使書面に記載すべき事項を映像面に表示したものの閲覧又は謄写の請求をすることができない。","ans":false,"exp":"電子投票に関する問題文の株主の権利は（少数株主権ではなく）単独株主権である。会社は，株主総会の日から3か月，電磁的方法により提供された事項を記録した電磁的記録を本店に備え置かなければならず（312条4項），株主は，会社の営業時間内はいつでも，当該請求の理由を明らかにして，当該記録された事項を法務省令で定める方法（紙面・映像面に表示する方法，会社法施行規則226条柱書16号）により表示したものの閲覧・謄写の請求ができる（312条5項）。","diff":"C"},{"no":132,"topic":"株主総会(2)","q":"2個以上の議決権を有する株主は，会社法所定の手続に基づき，その有する議決権を統一しないで行使することができるが，当該株主が他人のために株式を有する者でないときは，会社は，議決権を統一しないで行使することを拒否することができる。","ans":true,"exp":"313条1項3項。議決権の不統一行使を無制限に認めると，不必要な不統一行使がなされ，会社の事務処理を複雑にするからである。","diff":"A"},{"no":133,"topic":"株主総会(2)","q":"株主総会に出席しない株主が電磁的方法によって議決権を行使することができる場合において，株主は，電磁的方法により，議決権の不統一行使をすることができない。","ans":false,"exp":"電子投票による議決権の不統一行使も認められる（313条はこれを否定していない）。","diff":"B"},{"no":134,"topic":"株主総会(2)","q":"取締役会設置会社でない会社の株主が議決権を統一しないで行使する場合には，たとえ他人のために株式を有する株主でも，その旨およびその理由を，株主総会の日の3日前までに会社に対して通知しなければならない。","ans":false,"exp":"3日前までの通知が要求されているのは，取締役会設置会社の場合だけである（313条2項）。取締役会非設置会社では要求されていない。","diff":"B"},{"no":135,"topic":"株主総会(3)","q":"株式会社は，株主総会の議長または議長の選出方法を定款で定めなければならない。","ans":false,"exp":"通常は「社長を議長とする」などと定款に規定されていることが多いが，そのような会社法の規定があるわけではない。","diff":"A"},{"no":136,"topic":"株主総会(3)","q":"株主総会の議長は，その命令に従わない者その他当該株主総会の秩序を乱す者を退場させることができる。","ans":true,"exp":"議長には，秩序を維持し議事を整理する権限，総会の秩序を乱す者を退場させる権限がある（315条）。","diff":"A"},{"no":137,"topic":"株主総会(3)","q":"指名委員会等設置会社では，執行役は，株主総会において，株主から特定の事項について説明を求められた場合には，説明をしないことに正当な理由がある場合として会社法及び法務省令で定める場合を除き，当該事項について必要な説明をしなければならない。","ans":true,"exp":"取締役等（取締役・会計参与・監査役・執行役）は，左記の場合に説明義務を負う（314条）。","diff":"A"},{"no":138,"topic":"株主総会(3)","q":"取締役は，株主総会において株主から特定の事項について説明を求められた場合に，その事項が株主総会の目的である事項に関しないものであることを理由として，説明を拒否することはできない。","ans":false,"exp":"問題文の場合は説明拒絶事由に該当し，例外的に取締役等は説明を拒絶できる（314条ただし書）。","diff":"A"},{"no":139,"topic":"株主総会(3)","q":"監査役は，株主総会において，株主から特定の事項について説明を求められた場合には，当該事項が当該株主総会の目的である事項に関しないものであることを理由として，説明を拒否することはできない。","ans":false,"exp":"取締役等（取締役・会計参与・監査役・執行役）は左記の場合は説明義務を負うが（314条本文），問題文の場合は説明拒絶事由に該当し，例外的に監査役は説明を拒絶できる（314条ただし書）。","diff":"A"},{"no":140,"topic":"株主総会(3)","q":"取締役は，株主総会において株主から特定の事項について説明を求められた場合に，その説明をすることにより株主の共同の利益を著しく害することを理由として，説明を拒むことができる。","ans":true,"exp":"問題文の場合は説明拒絶事由に該当し，例外的に取締役等は説明を拒絶できる（314条ただし書）。","diff":"A"},{"no":141,"topic":"株主総会(3)","q":"取締役は，株主総会において株主から説明を求められた場合には，株主が当該株主総会において実質的に同一の事項について繰り返して説明を求めていることを理由に，説明を拒否することはできない。","ans":false,"exp":"問題文の場合は説明拒絶事由に該当し，例外的に取締役等は説明を拒絶できる（314条ただし書，会社法施行規則71条3号）。","diff":"B"},{"no":142,"topic":"株主総会(3)","q":"株主が，株主総会の目的である事項に関し，株主総会の日より相当の期間前に特定の事項を株式会社に通知をした場合において，その質問が実際に行われないときであっても，取締役は当該事項について必要な説明をしなければならない。なお，株主総会において決議することができる事項の全部につき議決権を行使することができない株主はおらず，また，定款に別段の定めはないものとする。","ans":false,"exp":"事前に質問事項を通知することは可能だが（会社法施行規則71条1号イ参照），「株主総会において…説明を求められた場合」に説明義務は生じるから（314条本文），株主が総会で実際に質問しなければ取締役等の説明義務は生じない（東京高判昭61・2・19）。なお，取締役等の説明義務は，総会に参加している株主に議題・議案に対する判断の手がかりを与えるものだから，総会参与権がないと解すべき議決権のない株主（298条2項かっこ書参照）は，314条の「株主」には含まれないと解されている（多数説）。また，314条は強行法規であり，定款規定で少数株主としたり持株要件を設けたりしても，当該定款規定は無効と解されている（多数説）。","diff":"C"},{"no":143,"topic":"株主総会(3)","q":"公開会社でない株式会社において，総株主の議決権の100分の1以上の議決権を有する株主は，株主総会の招集の手続及び決議の方法を調査させるため，当該株主総会に先立ち，裁判所に対し，検査役の選任の申立てをすることができる。なお，定款に別段の定めはないものとする。","ans":true,"exp":"会社または総株主の議決権の100分の1以上の議決権を有する株主は，株主総会に先立ち，総会の招集手続及び決議方法を調査させるため，裁判所に検査役の選任の申立ができる（306条1項）。","diff":"A"},{"no":144,"topic":"株主総会(3)","q":"株式会社は，株主総会にかかる招集の手続及び決議の方法を調査させるため，当該株主総会に先立ち，裁判所に対し，検査役の選任の申立てをすることができる。","ans":true,"exp":"株主（少数株主権）のほかに，会社にも，総会検査役選任請求権が認められている（306条1項）。","diff":"A"},{"no":145,"topic":"株主総会(3)","q":"株主総会の決議事項の全部につき議決権を行使することができない株主は，裁判所に対して，総会検査役の選任の申立てをすることができない。","ans":true,"exp":"いずれにしても，完全無議決権株式の株主には，総会検査役選任請求権はない（306条1項2項）。","diff":"B"},{"no":146,"topic":"株主総会(3)","q":"株主総会の招集手続を調査するための検査役については，当該会社又はその株主以外の者はその選任の申立てをすることができない。","ans":true,"exp":"総会検査役選任請求権は，会社と株主（少数株主権）にのみ認められている（306条1項）。","diff":"A"},{"no":147,"topic":"株主総会(3)","q":"法定の要件を満たす株主の申立てに基づき，株主総会に係る招集の手続及び決議の方法を調査させるための検査役が裁判所により選任された場合に，当該検査役は，必要な調査を行い，当該調査の結果を記載した書面等を（申立人の株主や会社ではなく）「裁判所」に提供して報告をしなければならない。","ans":false,"exp":"総会検査役は，調査の結果を記載・記録した書面等を（申立人の株主や会社ではなく）「裁判所」に提供して報告をしなければならない（306条5項）。","diff":"C"},{"no":148,"topic":"株主総会(3)","q":"裁判所は，総会検査役から調査の結果の報告を受けるが，それに基づいて取締役役に改めて株主総会を招集させることはできない。","ans":false,"exp":"裁判所は，必要があると認める場合は，取締役に株主総会の招集等を命じなければならない（307条1項）。","diff":"B"},{"no":149,"topic":"株主総会(3)","q":"監査役設置会社において，株主総会に係る招集の手続及び決議の方法を調査する検査役が会社法所定の手続によって選任され，当該検査役の報告を受けた裁判所が，一定の期間内に株主総会を改めて招集することを命ずる場合には，当該会社の取締役及び監査役は，当該検査役の報告の内容を調査し，その調査の結果を裁判所に報告しなければならない。","ans":false,"exp":"最後の「裁判所に報告」→「株主総会に報告」にすれば正しい（307条3項）。総会検査役の報告を受けた裁判所が株主総会の招集を命じた場合（同条1項），取締役役検査役の報告の内容を株主総会に開示しなければならず（同条2項），取締役役・監査役検査役の報告の内容を調査し，その結果を株主総会に報告しなければならない（同条3項）。","diff":"C"},{"no":150,"topic":"株主総会(3)","q":"株主総会においては，その決議によって，取締役，会計参与，監査役，監査役会及び会計監査人が当該株主総会に提出し，又は提供した資料を調査する者を選任することができる。","ans":true,"exp":"316条1項。第三者の中立的な意見は有益だからである。なお，取締役会設置会社でも，これは事前に議題として通知しなくても決議できる（309条5項ただし書）。","diff":"B"},{"no":151,"topic":"株主総会(3)","q":"株主総会においては，その決議によって，監査役が当該株主総会に提出し，又は提供した資料を調査する者を選任することができる。","ans":true,"exp":"316条1項。総会への資料の提出者には監査役も含まれている。なお，取締役会設置会社でも，これは事前に議題として通知しなくても決議できる（309条5項ただし書）。","diff":"B"},{"no":152,"topic":"株主総会(3)","q":"裁判所の許可を得て株主により招集された株主総会においては，その決議によって，株式会社の業務及び財産の状況を調査する者を選任することができる。","ans":true,"exp":"316条2項，297条。なお，取締役会設置会社でも，これは事前に議題として通知しなくても決議できる（309条5項ただし書）。","diff":"C"},{"no":153,"topic":"株主総会(3)","q":"株式会社は，株主総会の日から法定の期間，当該株主総会の議事録をその本店に備え置かなければならない。","ans":true,"exp":"株主総会議事録は，会日から本店に10年，写しを支店に5年（支店の備置きには例外あり），備え置く義務がある（318条）。","diff":"A"},{"no":154,"topic":"株主総会(3)","q":"株式会社の債権者は，当該株式会社の株主総会の議事録が書面をもって作成されているときは，裁判所の許可を得なければ，当該書面又は当該書面の写しの閲覧又は謄写の請求をすることができない。","ans":false,"exp":"株主・債権者は，株式会社の営業時間内は，いつでも，株主総会議事録の閲覧謄写を請求できる（318条4項）。裁判所の許可は不要である。","diff":"A"},{"no":155,"topic":"株主総会(3)","q":"株式会社の親会社社員は，株式会社の営業時間内はいつでも，株主総会の議事録の閲覧又は謄写の請求をすることができる。","ans":false,"exp":"株式会社の親会社社員は，「その権利を行使するため必要があるとき」は，「裁判所の許可を得て」，当該株式会社の株主総会の議事録の閲覧謄写を請求できる（318条5項）。なお，株主・債権者であれば，株式会社の営業時間内は，いつでも，株主総会議事録の閲覧謄写を請求できる（同条4項）。","diff":"B"},{"no":156,"topic":"株主総会(3)","q":"株式会社の親会社社員は，当該株式会社の営業時間内は，いつでも，電磁的記録をもって作成された株主総会の議事録を映像面に表示したものの閲覧を請求することができる。","ans":false,"exp":"株式会社の親会社社員は，「その権利を行使するため必要があるとき」は，「裁判所の許可を得て」，当該株式会社の株主総会の議事録の閲覧謄写を請求できる（318条5項）。なお，株主総会議事録が電磁的記録で作成されている場合は，当該記録事項を紙面または映像面に表示する方法により表示したものの閲覧謄写を請求できる（318条4項2号，会社法施行規則226条17号）。","diff":"B"},{"no":157,"topic":"株主総会(3)","q":"株式会社の子会社の株主は，その権利を行使するため必要があるときは，裁判所の許可を得て，当該株式会社の株主総会の議事録の閲覧又は謄写の請求をすることができる。","ans":false,"exp":"「子会社」社員には，株主総会議事録閲覧謄写請求権は認められない。「親会社」社員であれば，問題文の要件のもとで，当該請求権がある（318条5項）。","diff":"A"},{"no":158,"topic":"株主総会(3)","q":"取締役会設置会社の株主総会においてその延期について決議があった場合には，取締役会は，後日開催されるその株主総会の招集に関する事項を改めて決定しなければならない。","ans":false,"exp":"延期・継続があった後の延会・継続会は，最初に招集された総会と法律上はひとつの総会である。したがって，改めて招集手続をとる必要はなく，298条（株主総会招集事項の決定）等の適用はない（317条）。","diff":"B"},{"no":159,"topic":"株主総会(3)","q":"公開会社の株主総会は，株主総会の目的である事項として株主総会の延期を定めていない場合には，株主総会の延期を決議することができない。","ans":false,"exp":"延期・継続（317条）があった後の延会・継続会は，最初に招集された総会と法律上はひとつの総会である。したがって，公開会社か否かを問わず，最初に招集する総会の議題として延期・継続を定めておく必要はない。なお，延会・継続会については議題を取締役等で定める必要もない（317条は298条の適用を否定している）。","diff":"B"},{"no":160,"topic":"株主総会(3)","q":"株主総会の延期又は続行について決議があった場合には，取締役は，延期又は続行される株主総会について，改めて株主に対してその招集の通知を発しなければならない。","ans":false,"exp":"延期・継続があった後の延会・継続会は，最初に招集された総会と法律上はひとつの総会である。したがって，改めて招集手続をとる必要はなく，299条（株主総会の招集通知）等の適用はない（317条）。","diff":"B"},{"no":161,"topic":"株主総会(4)","q":"子会社を有する株式会社が，当該子会社の計算において，当該株式会社の株主総会における議決権の行使に関し，財産上の利益を供与することは禁止されていない。","ans":false,"exp":"当該会社だけでなく，「その子会社」の計算における利益供与も禁止されている（120条1項かっこ書）。","diff":"A"},{"no":162,"topic":"株主総会(4)","q":"株式会社は，株主の権利，当該株式会社に係る適格旧株主の権利又は当該株式会社の最終完全親会社等の株主の権利の行使に関し，当該株式会社又はその子会社の計算において，財産上の利益の供与をしてはならないが，その相手方は現に株主である者に限られる。","ans":false,"exp":"「何人」に対しても，利益供与は禁止される（120条1項）。現に株主である必要はない。","diff":"A"},{"no":163,"topic":"株主総会(4)","q":"最高裁判所の判例の趣旨によれば，株式会社から見て好ましくないと判断される株主が議決権を行使することを回避するために，当該株主の自己の計算において，当該株主から株式を譲り受けるための対価を何人かに対して供与する行為は，株主の権利の行使に関し利益を供与する行為に当たる。","ans":true,"exp":"蛇の目ミシン利益供与事件の判例。会社（蛇の目ミシン）から見て好ましくないと判断される株主（暴力団）の議決権等の行使を回避する目的で，当該株主（暴力団）から株式を買い取るための資金を会社が第三者（某総会屋）に供与する行為は，120条1項の「株主の権利…の行使に関し」にあたる（判例）。","diff":"C"},{"no":164,"topic":"株主総会(4)","q":"株式会社が，特定の株主に対して，当該株式会社又はその子会社の計算において，無償で財産上の利益を供与したときは，当該株式会社は株主の権利の行使に関し財産上の利益の供与をしたものとみなされるから，その利益の供与をした取締役は，株主の権利の行使に関して供与をしたものではないことを証明しても，当該会社に対する支払義務を免れない。","ans":false,"exp":"会社が特定の株主に対して無償で財産上の利益を供与した場合は，「株主の権利の行使に関し」利益供与がなされたものと「推定」される（120条2項前段）。「推定」であって「みなす」ではないから，反証は可能である。","diff":"B"},{"no":165,"topic":"株主総会(4)","q":"親会社を有する株式会社が，株主総会における議決権の行使に関し，当該親会社に対して無償で財産上の利益を供与したときは，当該株式会社は，株主の権利の行使に関し，財産上の利益を供与したものと推定される。","ans":true,"exp":"会社が特定の株主（親会社も株主である）に対して無償で財産上の利益を供与した場合は，「株主の権利の行使に関し」利益供与がなされたものと「推定」される（120条2項前段）。","diff":"B"},{"no":166,"topic":"株主総会(4)","q":"株式会社が特定の株主に対して有償で財産上の利益の供与をした場合において，当該株式会社の受けた利益が当該財産上の利益に比して著しく少ないときは，当該株式会社は，株主の権利の行使に関し，財産上の利益の供与をしたものと推定される。","ans":true,"exp":"120条2項後段。","diff":"B"},{"no":167,"topic":"株主総会(4)","q":"株主の権利の行使に関し，株式会社から当該株式会社の計算において財産上の利益の供与を受けた者は，その受けた利益を当該株式会社に返還しなければならない。","ans":true,"exp":"120条3項前段。","diff":"A"},{"no":168,"topic":"株主総会(4)","q":"株式会社が株主の権利の行使に関する財産上の利益の供与を当該株式会社の子会社の計算においてしたときは，当該利益の供与を受けた者は，これを当該株式会社に返還しなければならない。","ans":false,"exp":"子会社の計算において利益供与がなされた場合は，利益供与を受けた者はこれを「子会社」に返還しなければならない（120条3項前段）。","diff":"B"},{"no":169,"topic":"株主総会(4)","q":"株主は，株式会社に対し，株主の権利の行使に関する財産上の利益の供与を受けた者から当該利益の返還及びその等の訴えの提起を請求することはできない。","ans":true,"exp":"「利益の供与を受けた者」はこれを会社 or 子会社に返還義務を負うが（120条3項），会社の返還請求については代表訴訟等およびその前提としての提訴請求が認められている（847条1項，847条の2第1項）。","diff":"B"},{"no":170,"topic":"株主総会(4)","q":"株式会社の株主は，当該株式会社から株主の権利の行使に関して財産上の利益の供与を受けた者に対し，当該株式会社のために，供与された財産上の利益の返還を求める訴えを提起することができない。","ans":false,"exp":"「利益の供与を受けた者」はこれを会社 or 子会社に返還義務を負い，会社の返還請求については代表訴訟等が認められている（847条1項3項，847条の2第1項6項）。","diff":"B"},{"no":171,"topic":"株主総会(4)","q":"株主等の権利の行使に関する利益供与（以下「利益供与」という。）に関与した取締役は，その職務を行うにつき注意を怠らなかったことを証明すれば，株式会社に対して供与した利益の価額に相当する額を支払う義務（以下「支払義務」という。）を負わないが，当該利益供与をした張本人の取締役・執行役だけは，注意を怠らなかったことを証明しても，支払義務を免れない。","ans":true,"exp":"利益供与に関した取締役役の責任は立証責任が転換された過失責任である（120条4項ただし書）。しかし，利益供与をした（張本人の）取締役役・執行役だけは無過失責任である（120条4項ただし書かっこ書）。","diff":"B"},{"no":172,"topic":"株主総会(4)","q":"株式会社が，株主の権利の行使に関し，その子会社の計算において，財産上の利益の供与をしたときは，当該利益の供与をすることに関与した取締役は，その職務を行うについて注意を怠らなかったことを証明しない限り，当該子会社に対して，連帯して，供与した利益の価額に相当する額を支払う義務を負う。","ans":true,"exp":"株式会社が（当該株式会社はもちろん）子会社の計算において利益供与をした場合でも，当該株式会社の取締役役・執行役が支払義務を負う先は，子会社ではなく，「当該株式会社」である（120条4項本文）。","diff":"B"},{"no":173,"topic":"株主総会(4)","q":"株主の権利の行使に関してなされた株式会社による財産上の利益の供与に関与した取締役が，供与した利益の価額に相当する額を当該株式会社に対して支払う義務は，総株主の同意があれば，免除することができる。","ans":true,"exp":"利益供与に関した取締役役・執行役の会社に対する支払義務は，総株主の同意があれば免除できる（120条5項）。","diff":"A"},{"no":174,"topic":"株主総会(4)","q":"最高裁判所の判例の趣旨によれば，株主総会の決議は，定款に別段の定めがない限り，その議案に対する賛成の議決権数が決議に必要な数に達したことが明白になった時に成立するものであって，必ずしも議長が改めて挙手，起立，投票などの採決の手続をとることを要しない。","ans":true,"exp":"株主総会の決議は，会社法に特別の規定はないから，定款に別段の定めがない限り，議案に対する賛成の議決権数が決議の成立に必要な数に達したことが明白になった時に成立すると解すべきであり，必ずしも投票の議長が改めて採決の手続をとる必要はない（最判昭42・7・25）。","diff":"C"},{"no":175,"topic":"株主総会(4)","q":"最高裁判所の判例の趣旨によれば，株主総会の議長は，定款に別段の定めがない限り，議案に対する賛成の議決権数が決議の成立に必要な数に達したことを明白にするため，挙手，起立，投票等の採決の手続をとらなければならない。","ans":false,"exp":"株主総会の決議方法に関する規定はない。したがって，定款に別段の定めがあればそれによるが，定款に別段の定めがない場合は，議長は任意の方法によって株主の総意を確認できる（最判昭42・7・25）。","diff":"B"},{"no":176,"topic":"株主総会(4)","q":"公開会社である会計監査人設置会社の株主総会は，株主総会の目的である事項として会計監査人により株主総会に提出された資料を調査する者の選任を定めていない場合には，当該調査をする者を選任することができない。","ans":false,"exp":"取締役会設置会社（公開会社は取締役会設置会社，327条1項1号）の総会は，原則として，事前に定めた議題以外は決議できないが（309条5項本文），例外的に，総会に提出された資料等の調査者の選任（316条1項）・株主により招集された総会における会社業務財産状況調査者の選任（同条2項）・定時総会決議で会計監査人の出席を求めること（398条2項）は，事前に議題としていなくても決議できる（309条5項ただし書）。","diff":"B"},{"no":177,"topic":"株主総会(4)","q":"会計監査人を置く取締役会設置会社の株主総会において，会計監査人の出席を求めることを株主総会の招集通知に会議の目的として記載又は記録しないときは，会計監査人の出席を求める決議を行うことができない。","ans":false,"exp":"取締役会設置会社の総会は，原則として，事前に定めた議題以外は決議できないが（309条5項本文），例外的に，定時総会決議で会計監査人の出席を求めること（398条2項）は，事前に議題としていなくても決議できる（309条5項ただし書）。","diff":"B"},{"no":178,"topic":"株主総会(4)","q":"取締役会設置会社でない株式会社における株主総会は，招集通知に記載された株主総会の目的である事項以外の事項についても決議をすることができる。","ans":true,"exp":"議題以外について総会で決議することは，取締役会設置会社では原則として許されないが（309条5項），取締役会非設置会社では，株主総会は万能機関だから（295条1項），許される（309条5項本文反対解釈）。","diff":"A"},{"no":179,"topic":"株主総会(4)","q":"株式会社は，定款で定めることにより，株主総会の普通決議の要件を，出席した株主の議決権の過半数より引き下げることができる。","ans":false,"exp":"問題文は普通決議額について定款で決議要件の引き下げが可能としている点で誤り。すなわち，309条1項の通常の普通決議であれば，決議要件について定款で別段の定めは可能である。ただし，341条の役員の選任・解任の普通決議は，決議要件についての定款による引き上げしか認められない。","diff":"C"},{"no":180,"topic":"株主総会(4)","q":"株式会社は，株主総会の特別決議における定足数の要件を定款の定めによって排除することができる。","ans":false,"exp":"普通決議の定足数は，定款で完全に排除できる（309条1項）。しかし，特別決議の定足数は，定款で増減できるが，引下げは3分の1までに制限されており（同条2項柱書かっこ書），排除することはできない。","diff":"B"},{"no":181,"topic":"株主総会(4)","q":"株式会社は，株主総会の特別決議の要件を定款によって緩和することができない。","ans":false,"exp":"定足数は3分の1までであれば定款で緩和できる（309条2項かっこ書）。","diff":"B"},{"no":182,"topic":"株主総会(4)","q":"株式会社は，株主総会の特別決議における定足数の要件を排除する旨を定款で定めることができる。","ans":false,"exp":"特別決議の定足数は，定款で増減できるが，引下げは3分の1までに制限されており（309条2項柱書かっこ書），定足数要件を排除することはできない。","diff":"B"},{"no":183,"topic":"株主総会(4)","q":"監査役設置会社の株主総会が監査役を解任する決議を行う場合における定足数は，定款の定めによっても，当該監査役の解任について議決権を行使することができる株主の議決権の3分の1未満の割合とすることができない。","ans":true,"exp":"監査役の解任には株主総会特別決議が要求される（339条1項，309条2項7号。なお343条4項）。そして，特別決議の定足数は，定款で増減できるが，引下げは3分の1までに制限されている（309条2項柱書かっこ書）。","diff":"B"},{"no":184,"topic":"株主総会(4)","q":"取締役又は株主が株主総会の目的である事項について提案をした場合において，当該提案につき株主（当該事項について議決権を行使することができるものに限る。）の全員が書面又は電磁的記録により同意の意思表示をしたときは，当該提案を可決する旨の株主総会の決議があったものとみなされる。","ans":true,"exp":"株主総会決議省略制度（書面決議制度・電子決議制度とよばれる）である（319条1項）。","diff":"A"},{"no":185,"topic":"株主総会(4)","q":"株式会社の株主が提案をした株主総会の目的である事項について，当該提案につき議決権を行使することができる株主の全員が書面により同意の意思表示をした場合には，当該株式会社の親会社社員は，その権利を行使するため必要があるとき，当該書面の閲覧又は謄写の請求をすることができる。","ans":true,"exp":"会社は，総会決議省略制度（319条1項）による総会決議があったとみなされた日から10年間，株主全員の同意の書面・電磁的記録の本店への備え置き義務を負う（同条2項）。また，株主および会社債権者は会社の営業時間内はいつでも（会社の親会社社員は当該請求の理由を明らかにして，裁判所の許可を得て），当該書面・電磁的記録の閲覧等の請求ができる（同条3項4項）。","diff":"B"},{"no":186,"topic":"株主総会(4)","q":"取締役が株主の全員に対して株主総会に報告すべき事項を通知した場合において，当該事項を株主総会に報告することを要しないことにつき株主の全員が書面または電磁的記録により同意の意思表示をしたときは，当該事項の株主総会への報告があったものとみなされる。","ans":true,"exp":"株主総会への報告の省略の制度である（320条）。株主総会決議省略制度（319条，定時株主総会等が必要な場合については438条3項等）とあいまって，事業報告等の内容の報告（438条3項）等が必要な定時株主総会についても，その開催を省略できる。","diff":"B"},{"no":187,"topic":"株主総会(4)","q":"反対株主の株式買取請求権は，あらゆる株主総会決議において，これが成立した場合の反対株主に認められる。","ans":false,"exp":"これが認められるのは，株主の利益に特に重大な関係のある特定の決議が資本多数決によって成立した場合だけである。","diff":"A"},{"no":188,"topic":"株主総会(4)","q":"単元株式数を定款で定めていない株式会社では，累積投票による取締役の選任の決議については，株主はその有する1株につき，当該株主総会において選任する取締役の数と同数の議決権を有する。","ans":true,"exp":"累積投票制度による取締役役の選任（342条）の問題である（同条3項に問題文記載の規定がある）。","diff":"A"},{"no":189,"topic":"株主総会(4)","q":"株式会社は，定款で定めれば，たとえ株主からの請求があっても，取締役の選任において累積投票を行わないことができる。","ans":true,"exp":"取締役役の累積投票制度は，定款で排除できる（342条1項）。ほとんどの会社で排除されている。","diff":"A"},{"no":190,"topic":"株主総会(4)","q":"種類株式発行会社は，ある種類の株式の内容として，株式の分割が当該種類の株式の種類株主に損害を及ぼすおそれがあるときに，当該種類の株主を構成員とする種類株主総会の決議を要しない旨を定款で定めることができる。","ans":true,"exp":"種類株式発行会社が株式分割をする場合で，かつ，ある種類株式の種類株主に損害を及ぼすおそれがあるときは，原則として，その種類株主総会の特別決議が必要となるが（322条1項2号，324条2項4号），その種類株式の内容として，種類株主総会決議不要の定款規定を設けることができる（322条2項）。","diff":"B"},{"no":191,"topic":"株主総会(4)","q":"種類株式発行会社は，ある種類の株式の発行後に定款を変更して，当該種類の株式の種類株主に損害を及ぼすおそれのある合併を行う場合に当該種類の株式の種類株主を構成員とする種類株主総会の決議を要しない旨の定款の定めを設けることはできない。","ans":false,"exp":"種類株式発行会社が合併をする場合で，かつ，ある種類株式の種類株主に損害を及ぼすおそれがあるときは，原則として，その種類株主総会の特別決議が必要となるが（322条1項7号，324条2項4号），その種類株式の内容として，種類株主総会決議不要の定款規定を設けることができる（322条2項）。なお，当該種類株式発行後に定款変更して決議不要の定款規定を設ける場合は，その種類株全員の同意が必要となる（同条4項）。","diff":"B"},{"no":192,"topic":"株主総会(4)","q":"種類株式発行会社は，種類株主総会の決議要件を定款の定めにより加重することができる。","ans":true,"exp":"324条1項（定款に別段の定めが可能）2項柱書1文かっこ書2文（加重は可）3項柱書かっこ書（加重は可）。","diff":"A"},{"no":193,"topic":"株主総会(4)","q":"種類株主総会の決議には，株主総会と同じように普通決議，特別決議及び特殊の決議があるが，株主総会とは異なり，決議の省略の制度は存在しない。","ans":false,"exp":"一部の規定を除き，（全体）株主総会に関する規定は種類株主総会にも準用される（325条前段）。決議省略制度（319条，定式は319条を準用）も，種類株主総会に準用されている。","diff":"B"},{"no":194,"topic":"株主総会(4)","q":"電子提供措置をとらなければならない株式会社の取締役は，株主総会の日の3週間前の日又は株主総会の招集通知を発した日のいずれか早い日から株主総会の日後3か月を経過する日までの間，株主総会の目的である事項について継続して電子提供措置をとらなければならない。","ans":true,"exp":"325条の3第1項柱書1号（電子提供義務がある会社の取締役は，株主総会参考書類等（同項各号）に係る情報について継続して電子提供措置をとらなければならない）。","diff":"A"},{"no":195,"topic":"株主総会(4)","q":"電子提供措置をとらなければならない株式会社の取締役は，株主に対して株主総会の招集通知に際して，議決権行使書面を交付する場合においても，議決権行使書面に記載すべき事項に係る情報について，電子提供措置をとらなければならない。","ans":false,"exp":"取締役が株主総会の招集通知に際して株主に対し議決権行使書面を交付する場合においては，議決権行使書面に記載すべき事項に係る情報については，電子提供措置をとることを要しない（325条の3第2項）。","diff":"B"},{"no":196,"topic":"株主総会(4)","q":"取締役会設置会社以外の株式会社が電子提供措置をとる場合には，取締役は，株主総会の日の1週間又はこれを下回る期間を定款で定めた場合にあってはその期間前までに，株主に対し株主総会の招集通知を発しなければならない。","ans":false,"exp":"電子提供措置をとる場合における299条1項の株主総会の招集通知の発出期限は，取締役会設置会社か否かを問わず，株主総会の日の2週間前までである（325条の4第1項）。","diff":"A"},{"no":197,"topic":"株主総会(4)","q":"電子提供措置をとらなければならない株式会社が株主総会における議決権を行使することができる者を定めるための基準日を定めた場合においては，株主は，電子提供措置事項を記載した書面の交付を受けるためには，当該基準日までに当該株式会社に対し書面交付請求をしなければならない。","ans":true,"exp":"株主がある株主総会に係る電子提供措置事項を記載した書面の交付を受けるためには，当該株主総会の招集通知が発出されるまでに書面交付請求をしなければならないが，当該株主総会において議決権を行使できる者を定めるための基準日を定めた場合には，当該基準日までに書面交付請求をしなければならない（325条の5第2項）。","diff":"A"},{"no":198,"topic":"株主総会(4)","q":"電子提供措置をとる旨の定款の定めがある株式会社に対して，ある事業年度の定時株主総会に係る電子提供措置事項を記載した書面の交付を請求した株主は，当該請求の日の半年後に臨時株主総会が開催される場合において，当該臨時株主総会に係る電子提供措置事項を記載した書面を請求しなければ，その交付を受けることができない。","ans":false,"exp":"電子提供措置をとる旨の定款の定めがある場合でも，株主は書面交付請求ができる（325条の5第1項2項）。そして，一度された書面交付請求は，その効力を失う場合（同条4項5項）を除き，その後の全ての株主総会・種類株主総会について効力を有するので（同条1項参照），株主総会のたびに書面交付請求をする必要はない。","diff":"A"},{"no":199,"topic":"株主総会(5)","q":"株主総会の招集の手続が法令に違反することは，当該株主総会の決議の取消事由に該当する。","ans":true,"exp":"831条1項1号。","diff":"A"},{"no":200,"topic":"株主総会(5)","q":"株主総会決議の方法が法令又は定款に違反する場合には，訴えをもって当該決議が無効であることの確認を請求することができる。","ans":false,"exp":"決議方法の法令・定款違反は，決議取消事由である（831条1項1号）。訴えをもって当該決議の「取消し」を請求できる。","diff":"A"},{"no":201,"topic":"株主総会(5)","q":"最高裁判所の判例によれば，取締役会設置会社の代表取締役が有効な取締役会決議に基づかないで株主総会を招集し，何らかの決議がなされた場合は，株主は，株主総会決議取消しの訴えを提起することができる。","ans":true,"exp":"判例（最判昭和41年8月26日）。招集手続の法令違反（298条4項違反）にあたる（831条1項1号）。","diff":"A"},{"no":202,"topic":"株主総会(5)","q":"最高裁判所の判例の趣旨によれば，株主総会の招集の手続がその招集につき決定の権限を有する取締役会の有効な決議に基づかないでなされたものであって，かつ，その招集の通知が，通知すべき全ての株主に対して法定の招集期間に2日足りない（12日前に発出）してなされたときは，招集手続の法令違反が2つあるが，決議取消原因にとどまり，決議不存在原因ではない。","ans":false,"exp":"取締役会決議に基づかず，かつ，「代表取締役」が招集した株主総会の法定の招集期間が2日足りない（12日前に発出）した場合は，招集手続の法令違反が2つあり，違反事実が重大だから，831条2項の裁量棄却は許されないとする。なお，判例は，取締役会決議に基づかず，かつ，「代表取締役以外の取締役」が招集した株主総会は，瑕疵が2つとも重大であり，もはや法律上の意義における株主総会とはいえないから，当該総会における決議は不存在とする。","diff":"C"},{"no":203,"topic":"株主総会(5)","q":"最高裁判所の判例の趣旨によれば，取締役会の有効な決議に基づかないで代表取締役により株主総会が招集され，その招集の通知が全ての株主に対して法定の招集期間に2日足りない（12日前に発出）した場合は，当該招集の手続には性質及び程度から見て重大な瑕疵があり，その瑕疵が決議の結果に影響を及ぼさないと認められるときでも，裁判所は株主総会の決議の取消しの請求を認容すべきであって，これを棄却することは許されない。なお，当該株主総会について，株主の全員が招集の手続を経ることなく開催することに同意し，又は株主の全員がその開催に同意して出席しているという事情はないものとする。","ans":true,"exp":"判例は，取締役会決議に基づかず，かつ，「代表取締役」が招集した株主総会の法定の招集期間が2日足りない（12日前に発出）した場合は，招集手続の法令違反が2つあり（298条4項，299条1項違反），決議取消原因（決議不存在原因というのではなく，明言していないが判例）。ただし，831条2項の裁量棄却の関係では（法定の招集期間に2日しか足りていないから）違反事実が重大であり，裁量棄却は許されない（判例）。","diff":"C"},{"no":204,"topic":"株主総会(5)","q":"会社の提案する議題に関して，株主が法定の行使期限までに会社に対し適法に議案を提案したにもかかわらず，会社がその要領を招集通知に記載又は記録しないまま，株主総会決議がなされた場合は，株主は，株主総会決議取消しの訴えを提起することができる。","ans":true,"exp":"判例（大判昭和5年4月30日）。招集手続の法令違反（305条1号違反）にあたる（831条1項1号）。","diff":"B"},{"no":205,"topic":"株主総会(5)","q":"取締役会設置会社における株主総会において，招集通知に記載されていない議題について決議がなされた場合は，それが株主総会に提出された資料等の調査をする者の選任の決議等の例外的な場合を除いて，株主は，株主総会決議取消しの訴えを提起することができる。","ans":true,"exp":"判例（大判明治37年5月2日）。決議方法の法令違反（309条5項本文，298条1項2号違反）にあたる（831条1項1号）。なお，取締役会非設置会社であれば，そもそも議題以外でも決議できる（309条5項本文反対解釈，295条1項参照）。","diff":"A"},{"no":206,"topic":"株主総会(5)","q":"株主総会の決議の内容が定款に違反することは，当該決議の取消事由に該当する。","ans":true,"exp":"831条1項2号。","diff":"A"},{"no":207,"topic":"株主総会(5)","q":"株主総会において，会社が定款で定める取締役の員数を超える取締役を選任する決議をした場合は，株主は，株主総会決議取消しの訴えを提起することができる。","ans":true,"exp":"判例（大判昭和15年10月9日）。決議内容の定款違反にあたる（831条1項2号）。","diff":"A"},{"no":208,"topic":"株主総会(5)","q":"退任取締役に対し退職慰労金を支給する旨の株主総会の決議について，当該退任取締役が株主である場合，当該株主は議決権を行使することができる。","ans":true,"exp":"問題文の株主たる取締役は特別利害関係株主にあたる。そして，特別利害関係株主も議決権は行使できる。ただし，「著しく不当な決議」が成立した場合は，事後的に取消原因となるだけである（831条1項3号）。","diff":"B"},{"no":209,"topic":"株主総会(5)","q":"株主総会決議の取消しは，株主，取締役，執行役または監査役など会社法に定める一定の者が，決議の日から3か月以上に，会社に対する訴えの方法によってのみ主張することができる。","ans":true,"exp":"総会決議取消しの訴えは，形成訴訟であり，提訴権者・提訴期間の制限がある（831条1項本文）。","diff":"A"},{"no":210,"topic":"株主総会(5)","q":"最高裁判所の判例の趣旨によれば，株主が株主総会決議取消しの訴えを提起した後に，その係属中に死亡した場合は，相続により株式を取得した相続人は，その訴訟の原告たる地位を当然に承継しない。","ans":false,"exp":"株主が総会決議取消しの訴えを提起した後に死亡した場合，相続人がその原告たる地位を当然に承継する（判例）。なぜなら，相続の場合は，相続人は被相続人の法律上の地位を包括的に承継する以上，自益権等の議会決議取消訴訟提起権等の地位を取得するのは当然としてこれは売買等の議案も同様，被相続人の提起した訴訟の原告たる地位も当然に承継すると解すべきだからである。","diff":"C"},{"no":211,"topic":"株主総会(5)","q":"全部取得条項付種類株式の取得が行われた場合に，これにより株主の地位を失った者は，当該全部取得条項付種類株式の取得を決定した株主総会の決議について，当該決議の取消しの訴えの原告適格を有しない。","ans":false,"exp":"株主総会等の決議の取消しの訴え（831条1項柱書）の提訴権者である「株主等」のうちの「株主」には，何ら限定はない（828条2項1号）。したがって，当該議決による取消しにより株主（当該決議が創立総会の決議である場合には設立時株主）となる者も提起できる（831条1項柱書後段）。","diff":"B"},{"no":212,"topic":"株主総会(5)","q":"株主総会の招集の手続が法令に違反する場合には，当該株主総会の決議の取消しにより監査役となる者は，当該株主総会の日から3か月以内に，訴えをもって当該決議の取消しを請求することができる。","ans":true,"exp":"総会決議取消しの訴えの提訴権者である「株主等」には，当該決議の取消しにより株主・取締役・監査役・清算人または設立時取締役・設立時監査役としての職務継続期の権利義務を有する者となる者も含まれる（831条1項柱書後段）。","diff":"B"},{"no":213,"topic":"株主総会(5)","q":"株主総会において，ある議案に係る決議の方法が定款に違反する場合には，当該議案につき賛成の議決権を行使した株主は，訴えをもって当該決議の取消しを請求することができない。なお，当該請求の日は決議の日から3箇月を超えないものとする。","ans":false,"exp":"株主総会決議取消しの訴え（831条1項柱書）の提訴権者である「株主等」のうちの「株主」には，何ら限定はない（828条2項1号）。したがって，当該議案に賛成した株主も当該訴えを提起できる。","diff":"B"},{"no":214,"topic":"株主総会(5)","q":"指名委員会等設置会社において，株主総会の決議の内容が定款に違反する場合には，当該指名委員会等設置会社の執行役は，訴えをもって当該決議の取消しを請求することができない。なお，当該請求の日は決議の日から3箇月を超えないものとする。","ans":false,"exp":"株主総会決議取消しの訴えの提訴権者（831条1項柱書1号柱書2号）には，執行役も含まれる（828条2項1号）。","diff":"A"},{"no":215,"topic":"株主総会(5)","q":"指名委員会等設置会社では，株主，取締役，執行役又は清算人は，株主総会の日から3か月以内に，当該株主総会の決議の取消しの訴えを提起することができる。","ans":true,"exp":"831条1項柱書，828条2項1号。","diff":"A"},{"no":216,"topic":"株主総会(5)","q":"会計参与設置会社において，株主総会の決議の方法が著しく不公正である場合には，当該会計参与設置会社の会計参与は，訴えをもって当該決議の取消しを請求することができない。なお，当該請求の日は決議の日から3箇月を超えないものとする。","ans":true,"exp":"株主総会決議取消しの訴えの提訴権者（831条1項柱書）は「株主等」であるが，「株主等」のうち「会計参与」には，「会計参与設置会社」の会計参与は含まれていない（828条2項1号）。","diff":"B"},{"no":217,"topic":"株主総会(5)","q":"定款の定めにより監査の範囲を会計に関するものに限定された監査役は，訴えをもって株主総会の決議の取消しを請求することができない。","ans":true,"exp":"会計限定監査役（389条1項）を置く会社は，監査役設置会社ではない（2条9号かっこ書）。そして，監査役非設置会社では，831条1項の「株主等」に監査役は含まれない（828条2項1号）。したがって，会計限定監査役は，決議取消しの訴えの提訴権者ではない。会計限定監査役の権限は会計に関するものに限定される（389条3項4項5項7項）。","diff":"B"},{"no":218,"topic":"株主総会(5)","q":"会計監査人設置会社において，招集の手続に法令違反のある株主総会の決議により会計監査人が解任された場合には，当該会計監査人は，訴えをもって当該決議の取消しを請求することができない。なお，当該請求の日は決議の日から3箇月を超えないものとする。","ans":true,"exp":"株主総会決議取消しの訴えの提訴権者である「株主等」に，会計監査人は含まれていない（828条2項1号）。","diff":"B"},{"no":219,"topic":"株主総会(5)","q":"株式会社の債権者は，株主総会の決議の日から3か月以内に，訴えをもって当該決議の取消しを請求することができる。","ans":false,"exp":"「会社債権者」は総会決議取消しの訴えの提訴権者ではない（831条1項柱書，828条2項1号かっこ書）。","diff":"A"},{"no":220,"topic":"株主総会(5)","q":"最高裁判所の判例によれば，株主は，自己に対する株主総会の招集手続に瑕疵がない場合には，他の株主に対する招集手続に瑕疵があるときであっても，当該株主総会の決議の取消しの訴えを提起することができない。","ans":false,"exp":"判例は肯定説。","diff":"A"},{"no":221,"topic":"株主総会(5)","q":"株主総会に関する最高裁判所の判例によれば，ある株主に対する招集通知の欠如は，全ての株主との関係において取締役の職務上の義務違反を構成する。","ans":true,"exp":"判例（最判平成9年9月9日）。","diff":"B"},{"no":229,"topic":"株主総会(5)","q":"株主総会決議取消の訴えにおいて，請求を認容する判決が確定すると，その判決の効力は，第三者に対しても及ぶ。","ans":true,"exp":"認容判決の対世効は，会社の組織に関する訴え全般に認められている（838条）。","diff":"A"},{"no":246,"topic":"取締役","q":"公開会社においては，取締役が株主でなければならない旨を定款で定めることができない。","ans":true,"exp":"公開会社では定款で取締役の資格を株主に限定できない（331条2項本文）。","diff":"A"},{"no":247,"topic":"取締役","q":"取締役会設置会社でない会社においては，取締役役は株主でなければならない旨を定款で定めることができる。","ans":true,"exp":"非公開会社では可能である（331条2項ただし書）。なお，取締役会非設置会社は常に非公開会社である（327条1項1号参照）。","diff":"A"},{"no":248,"topic":"取締役","q":"日本国内に住所を有しない外国人が株式会社の取締役となる場合，日本国内に住所を有する代理人を指定しなければならない。","ans":false,"exp":"そのような規定はない。そもそも取締役は代理人に職務を執行させることはできない。","diff":"A"},{"no":249,"topic":"取締役","q":"法人は，株式会社を設立する発起人になることはできるが，取締役役になることはできない。","ans":true,"exp":"法人は発起人（→株主）にはなれるが，取締役にはなれない（331条1項1号で法人は取締役の欠格事由）。","diff":"A"},{"no":250,"topic":"取締役","q":"未成年者は，取締役となることができない。","ans":false,"exp":"未成年者は取締役になれる（欠格事由ではない，331条1項参照）。なお，成年被後見人・被保佐人も取締役になれる（令和元年改正により331条1項2号は削除された。なお331条の2参照）。監査役・執行役も同様である（335条1項，402条4項）。","diff":"B"},{"no":251,"topic":"取締役","q":"成年被後見人が取締役に就任するには，その成年後見人が，当該成年後見人の同意（後見監督人がある場合にあっては，当該成年後見人及び当該後見監督人の同意）を得た上で，当該成年被後見人に代わって就任の承諾をしなければならない。","ans":true,"exp":"成年被後見人や被保佐人も取締役になれる。ただし，法的安定性確保の要請から問題文記載の制度が設けられた（331条の2第1項）。なお，監査役・執行役も同様である（335条1項，402条4項）。","diff":"C"},{"no":252,"topic":"取締役","q":"破産者であって復権を得ていない者も，取締役となることができる。","ans":true,"exp":"破産は取締役の欠格事由ではない（331条1項参照）。したがって，破産手続開始の決定を受けてまだ復権していない者も取締役に選任できる。","diff":"C"},{"no":253,"topic":"取締役","q":"大会社である取締役会設置会社においては，取締役は，3人以上で，そのうち1人以上は，社外取締役でなければならない。","ans":false,"exp":"取締役会設置会社は，取締役役は3人以上でなければならないが（331条5項），大会社か否かを問わず，社外取締役は要求されていない。ただし，監査等委員会設置会社は監査等委員の過半数は社外取締役でなければならず（331条6項），また，指名委員会等設置会社は各委員会の委員の過半数は社外取締役でなければならない（400条3項）。","diff":"A"},{"no":254,"topic":"取締役","q":"公開会社でなく，監査等委員会設置会社及び指名委員会等設置会社でもない株式会社の取締役の任期は，定款によって，選後10年以内に終了する事業年度のうち最終のものに関する定時株主総会の終結の時までとすることができる。","ans":true,"exp":"332条2項。非公開会社（全部株式譲渡制限会社）は，株主間の関係が緊密なので，取締役としての適否についてそれほど短期間で株主の信任を問う必要がないからである。","diff":"A"},{"no":255,"topic":"取締役","q":"監査等委員会設置会社において，監査等委員である取締役以外の取締役の任期は，選任後1年以内に終了する事業年度のうち最終のものに関する定時株主総会の終結の時までであり，定款又は株主総会の決議によってその任期を短縮することはできない。","ans":false,"exp":"前半は正しいが（332条1項3項），後半は誤り（短縮できる）。同条1項ただし書。なお，監査等委員である取締役の任期は，2年であり（332条1項），短縮は認められない（同条4項）。","diff":"A"},{"no":256,"topic":"取締役","q":"監査等委員である取締役の任期は，選任後2年以内に終了する事業年度のうち最終のものに関する定時株主総会の終結の時までである。","ans":true,"exp":"監査等委員である取締役の任期は2年であり（332条1項），定款・総会決議によって短縮することは認められない（同条4項）。","diff":"A"},{"no":257,"topic":"取締役","q":"監査等委員会設置会社の監査等委員である取締役の任期は，定款の定めにより法定の任期よりも短縮することができる。","ans":false,"exp":"監査等委員である取締役の任期は，2年であり（332条1項），定款・総会決議によって短縮することは認められない（同条4項）。","diff":"A"},{"no":258,"topic":"取締役","q":"任期の満了前に退任した監査等委員である取締役の補欠として選任された監査等委員である取締役の任期は，定款の定めによって，退任した監査等委員である取締役の任期の満了する時までとすることができる。","ans":true,"exp":"332条5項。監査役に関する336条3項と同様。","diff":"A"},{"no":259,"topic":"取締役","q":"指名委員会等設置会社の取締役の任期は，選任後2年以内に終了する事業年度のうち最終のものに関する定時株主総会の終結の時までである。","ans":false,"exp":"「2年」でなく「1年」である（332条6項）。","diff":"A"},{"no":260,"topic":"取締役","q":"指名委員会等設置会社でない株式会社が指名委員会等を置く旨の定款の変更を行った場合には，当該株式会社の取締役の任期は，当該定款の変更が効力を生じた事業年度の終結の時に満了する。","ans":false,"exp":"「当該定款の変更の効力が生じた時」に満了する（332条7項柱書1号）。当該定款の変更を行った場合も同様である（同条項2号）。","diff":"B"},{"no":261,"topic":"取締役","q":"株式会社において，監査等委員会を置く旨の定款の変更をした場合には，当該株式会社の取締役の任期は，当該定款の変更を行った事業年度の終了の時に満了する。","ans":false,"exp":"「当該定款の変更の効力が生じた時」に満了する（332条7項柱書2号）。委員を置く旨の定款の変更を行った場合も同様である（同条項1号）。","diff":"B"},{"no":264,"topic":"取締役","q":"株式会社の株主総会において取締役の選任決議を行う場合，当該株式会社は，あらかじめ株主総会参考書類に取締役就任につき候補者の承諾を得ておかなければならない。","ans":false,"exp":"候補者の承諾を得ておく必要はない。ただし，その場合は株主総会参考書類にその旨を記載しなければならない（会社法施行規則74条1項2号，74条の3第1項3号）。","diff":"B"},{"no":265,"topic":"取締役","q":"取締役を選任又は解任する株主総会決議の定足数については，定款の定めによっても，議決権を行使することができる株主の議決権の3分の1未満に引き下げることはできない。","ans":true,"exp":"役員の選任・解任の決議については，役員の重要性から，定款による定足数の引き下げは，3分の1までに制限されている（341条1かっこ書）。","diff":"A"},{"no":266,"topic":"取締役","q":"取締役を選任又は解任する株主総会決議の決議要件については，定款に定めを置けば，会社法に定められた決議要件を引き下げることも認められる。","ans":false,"exp":"役員の選任・解任の決議については，役員の重要性から，決議要件は引き上げしか認められない（341条第2かっこ書）。","diff":"A"},{"no":267,"topic":"取締役","q":"監査役設置会社（公開会社であり，かつ，大会社であるものに限る。）であって金融商品取引法第24条第1項の規定によりその発行する株式について有価証券報告書を内閣総理大臣に提出しなければならないものは，社外取締役を置くことを要しない。","ans":false,"exp":"問題文の規制対象会社は（最低1人の）社外取締役の設置が義務づけられている（327条の2）。","diff":"A"},{"no":268,"topic":"取締役","q":"監査役設置会社（公開会社であり，かつ，大会社であるものに限る。）であって金融商品取引法第24条第1項の規定によりその発行する株式又は社債について有価証券報告書を内閣総理大臣に提出しなければならないものが社外取締役を置いていない場合には，取締役は，当該事業年度に関する定時株主総会において，社外取締役を置くことが相当でない理由を説明しなければならない。","ans":false,"exp":"第1に「株式又は社債について」が誤りで「株式について」が正しく，第2に問題文の規制（理由説明義務）は令和元年改正により廃止され，問題文の規制対象会社（上記第1の誤りを修正した上場会社等）は「社外取締役を置かなければならない」とされた（327条の2）。社外取締役の設置義務化。","diff":"A"},{"no":269,"topic":"取締役","q":"大会社である監査役設置会社は，1人以上の社外取締役を置かなければならない。","ans":false,"exp":"監査役設置会社が大会社であるというだけで，社外取締役の設置義務があるわけではない。1人以上の社外取締役の設置義務を負う監査役設置会社は，公開会社かつ大会社かつ株式について有価証券報告書提出義務がある会社である（327条の2）。","diff":"A"},{"no":270,"topic":"取締役","q":"株式会社は，正当な理由がなければ，株主総会の普通決議により，取締役を解任することができない。","ans":false,"exp":"「いつでも」「理由のいかんを問わず」総会普通決議で解任できる（339条1項）。","diff":"A"},{"no":271,"topic":"取締役","q":"取締役は株主総会の普通決議で選任でき，監査等委員である取締役の解任及び累積投票で選任された取締役の解任は株主総会の特別決議による必要があるが，それ以外は株主総会の普通決議で解任できる。","ans":true,"exp":"選任は普通決議（329条1項，341条）。解任は，監査等委員である取締役と累積投票による選任取締役の解任は特別決議だが（339条1項・309条2項7号・344条の2第3項，342条6項・309条2項7号），それ以外は普通決議（339条1項，341条）。","diff":"A"},{"no":272,"topic":"取締役","q":"監査役設置会社においては，社外取締役の解任は，当該社外取締役が累積投票により選任されていなくとも，株主総会の特別決議によらなければならない。","ans":false,"exp":"取締役の解任は，監査等委員である取締役と累積投票による選任取締役の解任は特別決議だが（339条1項・309条2項7号・344条の2第3項，342条6項・309条2項7号），それ以外は普通決議である（339条1項，341条）。社外取締役も同様である。","diff":"A"},{"no":273,"topic":"取締役","q":"監査役設置会社の社外取締役の解任は，株主総会の特別決議によらなければならない。","ans":false,"exp":"取締役の解任は，監査等委員である取締役と累積投票による選任取締役の解任は特別決議だが（339条1項・309条2項7号・344条の2第3項，342条6項・309条2項7号），それ以外は普通決議である（339条1項，341条）。社外取締役も同様である。","diff":"A"},{"no":274,"topic":"取締役","q":"取締役が正当な理由なく解任された場合には，当該取締役役は，解任によって生じた損害の賠償を会社に対し請求することができる。","ans":true,"exp":"339条2項。","diff":"A"},{"no":275,"topic":"取締役","q":"取締役は，株主総会の決議によらなければ解任されることはない。","ans":false,"exp":"役員解任の訴え（854条）により解任されることがある。","diff":"A"},{"no":276,"topic":"取締役","q":"公開会社である監査役設置会社において，総株主の議決権の100分の3以上の議決権を有する株主は，その株式の保有期間にかかわらず，取締役を解任する旨の議案を株主総会において否決された場合に，訴えをもって当該取締役の解任を請求することができる。","ans":false,"exp":"役員解任の訴えは，公開会社では6か月の保有期間要件が要求される（854条1項1号2号）。本問は1号の事例。","diff":"A"},{"no":277,"topic":"取締役","q":"取締役の職務の執行に関し不正の行為又は法令若しくは定款に違反する重大な事実があったにもかかわらず，当該取締役を解任する旨の議案が株主総会において否決されたときは，株主は，当該株主総会の日から30日以内に，訴えをもって当該取締役の解任を請求することができる。","ans":false,"exp":"「株主は」とあるのが誤り。役員解任の訴え（854条1項）は，単独株主権ではなく，少数株主権である（同条項1号2号）。「3%以上（議決権基準 or 株式数基準）の議決権を有する株主」とすべき。もっとも，微妙な肢である。","diff":"B"},{"no":278,"topic":"取締役","q":"株式会社の取締役の解任の訴えに係る請求を認容する判決が確定したときは，当該株式会社は，当該株式会社の本店の所在地を管轄する登記所にその登記をしなければならない。","ans":false,"exp":"937条1項1号に規定されている訴えに係る請求認容判決（原告勝訴判決）が確定した場合は，（株式会社自身が変更登記（909条，915条）をする必要はなく）裁判所書記官は，職権で，遅滞なく，会社の本店所在地を管轄する登記所の登記を嘱託（「登記してね」という委託）しなければならない（937条1項柱書1号）。役員解任の訴え（854条）も上記訴えに含まれている（937条1項1号ヌ）。役員解任の訴え・設立無効の訴え・新株発行無効の訴え・資本金額減少無効の訴えその他の既に何らかの登記がされていることを前提にした訴えの請求認容判決が確定した場合は，株式会社が自発的な登記申請を待つ必要もなく，裁判所書記官が職権で登記の嘱託をする。","diff":"C"},{"no":279,"topic":"取締役","q":"裁判所が利害関係人の申立てにより一時取締役の職務を行うべき者を選任した場合，裁判所は，株式会社がその者に対して支払う報酬の額を定めることができる。","ans":true,"exp":"346条2項3項。","diff":"B"},{"no":280,"topic":"取締役","q":"非取締役会設置会社において代表取締役その他株式会社を代表する者を定めていない場合には，非取締役会設置会社の業務は，各取締役が委任を受けていなくても多数で業務執行の決定を行うことができる。なお，非取締役会設置会社には，2人以上の取締役が置かれているものとし，定款に別段の定めはないものとする。","ans":false,"exp":"非取締役会設置会社では，取締役が2人以上いる場合は，（代表取締役を定めているか否かに関係なく）取締役の（頭数の）過半数で業務執行の決定を行う（348条2項）。348条3項各号以外の事項であれば，取締役の過半数の決定でその決定を委任することができ，委任は必要である。なお，2人以上の取締役がいる非取締役会設置会社において代表取締役が定められていない場合は，取締役全員が代表取締役である（47条1項かっこ書参照）。","diff":"A"},{"no":281,"topic":"取締役","q":"指名委員会等設置会社において，執行役が当該指名委員会等設置会社の業務を執行することにより株主の利益を損なうおそれがあるときは，当該指名委員会等設置会社は，その都度，取締役の決定（取締役役会設置会社では取締役会の決議）によって，当該会社の業務執行を社外取締役に委託することができる。","ans":true,"exp":"指名委員会等設置会社に限らず，会社と取締役との間の利益が相反する状況にあるとき，当該会社と取締役との利益が相反する状況にある場合，その他の会社の業務を執行することにより株主の利益を損なうおそれがあるときは，当該会社は，その都度，取締役の決定（取締役役会設置会社では取締役役会の決議）によって，当該会社の業務執行を社外取締役に委託できる（348条の2第1項2項）。なお，上記により委託された業務執行をしても，社外取締役が業務執行取締役役・執行役の指揮命令により業務執行をした場合を除き，社外取締役の要件（2条15号イ）をみたさないことにはならない（348条の2第3項）。","diff":"B"},{"no":282,"topic":"取締役","q":"取締役の氏名及び住所は登記事項である。","ans":false,"exp":"取締役役は氏名のみが登記事項である（911条3項13号22号イ）。氏名に加えて住所も登記事項とされているのは，代表取締役役・代表執行役である（同条項14号23号ハ）。","diff":"A"},{"no":283,"topic":"取締役","q":"株式会社は，代表取締役がその職務を行うについて第三者に加えた損害を賠償する責任を負う。","ans":true,"exp":"350条。「会社」の損害賠償債務である。なお，一定の場合は「役員等」も第三者に対して損害賠償責任を負う（429条）。","diff":"B"},{"no":284,"topic":"取締役","q":"最高裁判所の判例の趣旨によれば，代表取締役がその職務を行うについて不法行為をして第三者に損害を加えたため，会社が当該第三者に対し損害を賠償する責任を負う場合には，代表取締役も個人として当該第三者に対し不法行為責任を負う。","ans":true,"exp":"代表取締役その他の代表者がその職務を行うについて第三者に損害を加えた場合は，会社は当該第三者に対して損害賠償責任を負う（350条）。この場合に，代表取締役等の行為には「代表機関としての行為」と「個人の行為」の二面性があるから，代表取締役等も個人として当該第三者に対して不法行為責任（民法709条）を負う（判例）。","diff":"C"},{"no":285,"topic":"取締役会","q":"監査役設置会社である取締役会設置会社において，取締役会は，支配人その他の重要な使用人の選任及び解任の決定を代表取締役に委任することができる。","ans":false,"exp":"委員を設置しない取締役会設置会社では，支配人等は重要な業務執行の決定として代表取締役等に委任できない（362条4項3号）。監査等委員会設置会社も原則としては同様（399条の13第4項3号）。なお，監査役設置会社は委員会を設置しない会社である（327条4項参照）。","diff":"A"},{"no":286,"topic":"取締役会","q":"監査役設置会社である取締役会設置会社において，取締役会は，その決議により，支店その他の重要な組織の設置の決定を取締役に委任することができる。","ans":false,"exp":"支店その他の重要な組織の設置・変更・廃止は重要な業務執行の決定として代表取締役等に委任できない（362条4項4号）。","diff":"A"},{"no":287,"topic":"取締役会","q":"監査役設置会社の業務の適正を確保するための体制（以下「内部統制システム」という。）に関し，大会社でない取締役会設置会社においては，取締役会は，内部統制システムの整備の決定につき，取締役役に委任することができる。","ans":false,"exp":"大会社でない場合は，取締役会設置会社でも，内部統制システムの整備義務はないが（362条5項参照），内部統制システムを整備するのであれば，当該整備の決定は取締役会の専決事項である（362条4項6号）。","diff":"A"},{"no":288,"topic":"取締役会","q":"指名委員会等設置会社でない株式会社において，代表取締役役以外の取締役であって，取締役会の決議によって選定された業務執行取締役役は，3か月に1回以上，自己の職務の執行の状況を取締役会に報告しなければならない。","ans":true,"exp":"代表取締役役・選定業務執行取締役役には，定期的な取締役役会への職務執行状況報告義務がある（363条2項）。","diff":"A"},{"no":289,"topic":"取締役会","q":"取締役会は，3箇月に1回以上開催されなければならない。","ans":true,"exp":"代表取締役役等・執行役は「3箇月に1回以上」自己の職務執行状況を取締役役会に報告しなければならない（363条2項，417条4項）。この関係で，取締役会は少なくとも3か月に1回以上は開催される必要がある。","diff":"A"},{"no":290,"topic":"取締役会","q":"指名委員会等設置会社以外の取締役会設置会社においては，代表取締役の解職は，取締役会の決議によって行われる。","ans":true,"exp":"代表取締役役の選定・解職は取締役会の権限である（362条2項3号3項，399条の13第1項3号3号，416条1項1号）。","diff":"A"},{"no":291,"topic":"取締役会","q":"最高裁判所の判例の趣旨によれば，代表取締役解職の効果は，取締役会の解職決議によって生じ，本人に対する告知をまって初めて生ずるものではない。","ans":true,"exp":"代表取締役役の解職の効果は，取締役役会の解職決議（362条2項3号，399条の13第1項3号3号）によって生じ，本人に対する告知をまって初めて生じるものではない（最判昭41・12・20）。なぜなら，取締役役会の解職決議は代表機関たる地位をはく奪するものであって，当該決議によって代表機関たる地位が失われる効果として，代表権限も当然に消滅すると解されるからである。","diff":"C"},{"no":292,"topic":"取締役会","q":"株式会社は，取締役会を招集する取締役を定款又は取締役会で定めることができる。","ans":true,"exp":"取締役会の招集権は，原則として各取締役にあるが，定款・取締役会で定めた場合は，その取締役が招集する（366条1項）。","diff":"A"},{"no":293,"topic":"取締役会","q":"取締役会は，取締役会を招集する取締役を定めなければならない。","ans":false,"exp":"取締役会の招集権者の定めがなければ（定めることもできる，という意味），各取締役が招集権者である（366条1項）。","diff":"A"},{"no":294,"topic":"取締役会","q":"定款で取締役会の招集権者を定めたときは，その招集権者以外の取締役が取締役会を招集することはできない。","ans":false,"exp":"定款 or 取締役会で取締役会の招集権者を限定した場合でも（366条1項ただし書），他の取締役は取締役役会の招集を請求・招集できる（同条2項3項）。","diff":"A"},{"no":295,"topic":"取締役会","q":"監査役設置会社における株主は，取締役が当該会社の目的の範囲外の行為その他法令若しくは定款に違反する行為をし，又はこれらの行為をするおそれがあると認めるときは，取締役会の招集を請求することができる。","ans":false,"exp":"監査役設置会社・監査等委員会設置会社・指名委員会等設置会社の株主には，取締役役会招集請求権・招集権はない（367条1項かっこ書）。","diff":"A"},{"no":296,"topic":"取締役会","q":"取締役役会及び監査役を置き，監査役の監査の範囲を会計に関するものに限定する旨を定款で定める株式会社において，取締役役会の招集に基づいて招集された取締役役会に出席し，意見を述べることができる。","ans":true,"exp":"会計限定監査役を置く会社は，監査役設置会社ではないから（2条9号かっこ書），株主は一定の場合に取締役役会招集請求権・招集権がある（367条1項3項）。取締役役会への出席・意見陳述もある（同条4項）。","diff":"B"},{"no":297,"topic":"取締役会","q":"監査役設置会社では，取締役会を招集する者が招集の通知を発する場合には，取締役役会の日の1週間前までに，各取締役及び各監査役に対してその通知を発しなければならない。なお，定款に別段の定めはないものとする。","ans":true,"exp":"368条1項。","diff":"A"},{"no":298,"topic":"取締役会","q":"監査役設置会社が，会計監査人設置会社である場合には，取締役役会の招集通知は，会計監査人にも発しなければならない。","ans":false,"exp":"取締役役会の招集通知は，会計監査人へ発出する必要はない。","diff":"A"},{"no":299,"topic":"取締役会","q":"監査役設置会社における取締役役会（特別取締役による取締役役会の場合を除く。）の招集に関して，当該監査役設置会社が，会計参与設置会社でない場合には，取締役役は，取締役役及び監査役の全員の同意があるときは，招集の手続を経ることなく開催することができる。","ans":false,"exp":"監査役設置会社（監査役設置会社も同様）の取締役役会の招集手続の省略には，取締役役および監査役の「全員」の同意が必要である（368条2項）。なお，会計参与設置会社では，「計算書類等の承認に関する取締役役会」の招集手続を省略する場合は，会計参与全員の同意も得なければならない（376条3項）。","diff":"A"},{"no":300,"topic":"取締役会","q":"取締役役会の招集手続を省略するには，定款の定めが必要である。","ans":false,"exp":"定款の定めは不要である（368条2項）。","diff":"A"},{"no":301,"topic":"取締役会","q":"取締役役会の招集通知は，定款又は取締役役会で定めた場合を除き，書面又は電磁的方法によらずに，口頭ですることができる。","ans":true,"exp":"取締役役会の招集は，株主総会（299条2項3項）と違って，通知の方式は法定されていないから，どのような方法でもよい。","diff":"A"},{"no":302,"topic":"取締役会","q":"取締役役会を招集する際の各取締役役および各監査役への通知は，口頭でもかまわないし，議題を示す必要もない。","ans":true,"exp":"取締役役会（299条2項3項）と違って，通知の方式は法定されていない。また，取締役役会は株主総会と違って，取締役役者は会社の事情に精通している以上，いちいち議題を示す必要もない。","diff":"A"},{"no":303,"topic":"取締役会","q":"取締役役会は，取締役役会の招集通知に記載された会議の目的事項以外の事項について決議をすることができる。","ans":true,"exp":"一定の場合の株主総会（299条4項）と違って，取締役役会の招集通知にはそもそも議題を示す必要ない。したがって，取締役役会の招集通知に仮に議題を記載したとしても，その議題以外についても決議できる。","diff":"A"},{"no":304,"topic":"取締役会","q":"取締役役会の決議の定足数の要件を加重するには，定款の定めが必要である。","ans":true,"exp":"取締役役会の決議の定足数は，原則として議決権に加わることができる取締役役の過半数であるが，「定款」でこれを上回る割合を定めることとは可能である（369条1項）。","diff":"A"},{"no":305,"topic":"取締役会","q":"取締役役会においても，株主総会における株主と同様に，取締役役は代理人によって議決権を行使することが認められる。","ans":false,"exp":"株主総会では認められるが（310条1項），取締役役会では議決権の代理行使は認められない。","diff":"A"},{"no":306,"topic":"取締役会","q":"取締役役会の決議について特別の利害関係を有する取締役役は，議決に加わることができない。","ans":true,"exp":"369条2項。","diff":"A"},{"no":307,"topic":"取締役会","q":"最高裁判所の判例の趣旨によれば，代表取締役の解職に関する取締役役会の決議においては，当該代表取締役役は，特別の利害関係を有する取締役役に当たらず，当該取締役役会において議決権を行使することができる。","ans":false,"exp":"解職決議の対象である代表取締役役本人は特別利害関係取締役役（369条2項）にあたり，議決に加わることはできない（判例）。","diff":"A"},{"no":308,"topic":"取締役会","q":"取締役役会は，会議を開催しないで決議をすることは認められない。","ans":false,"exp":"取締役役会の決議の省略の制度がある（370条）。","diff":"A"},{"no":309,"topic":"取締役会","q":"取締役役会の決議を省略するには，定款の定めが必要である。","ans":true,"exp":"株主総会決議省略制度（319条，定式は319条を準用）と違い，取締役役会の決議省略制度は定款の定めが要求される（370条）。","diff":"A"},{"no":310,"topic":"取締役会","q":"監査役設置会社における取締役役会に関し，取締役役が取締役役会の決議の目的である事項について提案をした場合において，当該提案につき取締役役（当該事項につき議決に加わることができるものに限る。）及び監査役の全員が書面又は電磁的記録により同意の意思表示をしたときは，当該提案を可決する旨の取締役役会の決議があったものとみなすことができる旨を定款に定めることができる，かつ特別取締役役は選定されていないものとする。","ans":true,"exp":"370条。監査役設置会社では監査役が異議を述べた場合を除く（370条ただし書）なお，370条の取締役役会決議省略制度は，特別取締役役による取締役役会には適用されない（373条4項）。","diff":"B"},{"no":320,"topic":"取締役会","q":"特別取締役役は，社外取締役役の中から選定されなければならない。","ans":false,"exp":"その必要はない（373条1項柱書）。","diff":"A"},{"no":321,"topic":"取締役会","q":"特別取締役役による取締役役会の決議の制度を置くためには，特別取締役役のうち少なくとも1人は，社外取締役役でなければならない。","ans":true,"exp":"6人以上の取締役役の中に1人以上の社外取締役役がいればよい（373条1項2号）。","diff":"A"},{"no":322,"topic":"取締役会","q":"特別取締役役の互選によって定められた者は，特別取締役役による取締役役会の決議後，遅滞なく，当該決議の内容を特別取締役役以外の取締役役に報告しなければならない。この報告の方式に決まりはなく，すべての取締役役により構成される取締役役会を招集する必要はない。","ans":true,"exp":"373条3項。他の取締役役への報告義務はあるが，報告の方式に特別の定めはない。","diff":"B"},{"no":327,"topic":"取締役会","q":"取締役役会の決議に参加した取締役役が，その議事録に異議をとどめなかったときは，当該取締役役は当該決議に賛成したものと推定される。","ans":false,"exp":"「みなされる」のではなく，「推定される」（369条5項）。","diff":"A"},{"no":328,"topic":"取締役会","q":"監査役設置会社における株主は，取締役役会議事録の閲覧を請求することができない。","ans":false,"exp":"権利を行使するため必要がある場合で，「裁判所の許可」があれば，閲覧・謄写請求できる（371条3項）。","diff":"A"},{"no":329,"topic":"取締役会","q":"取締役役会設置会社の親会社の債権者は，当該取締役役会設置会社の役員又は執行役の責任を追及するため必要があるときは，裁判所の許可を得て，当該取締役役会設置会社の取締役役会の議事録の閲覧又は謄写の請求をすることができる。","ans":false,"exp":"取締役役会議事録の閲覧謄写請求ができるのは，株主・（当該会社の）会社債権者・親会社社員に限られ（371条2項〜5項），親会社の債権者には認められない。問題文の「親会社の」を削除すれば正しくなる。","diff":"B"},{"no":330,"topic":"取締役会","q":"最高裁判所の判例によれば，一部の取締役役に取締役役会の招集通知がなされず，かつ，当該取締役役が取締役役会に欠席した場合でも，当該取締役役会での決議が例外なく無効になるというわけではない。","ans":true,"exp":"判例は，決議の結果に影響を及ぼさない特段の事情がある場合（当該取締役役が名目的取締役役である等）には，例外的に有効とする。","diff":"A"},{"no":331,"topic":"取締役会","q":"最高裁判所の判例の趣旨によれば，公開会社ではない取締役役会設置会社において，取締役役会の決議によるほか株主総会の決議によっても代表取締役役を定めることができる旨の定款の定めは，無効である。","ans":false,"exp":"取締役役会設置会社（非公開会社でも公開会社でも同様）では定款で株主総会の権限を拡大する余地があり（295条2項），代表取締役役の選定権限を定款で株主総会に権限委譲する定款規定は有効である（判例）。","diff":"A"},{"no":332,"topic":"代表取締役","q":"取締役役会設置会社でない会社において，取締役役が2人以上ある場合には，取締役役は各自会社を代表するが原則であるが，定款や定款の定めに基づく取締役役の互選によって，取締役役の中から代表取締役役を定めることができる。","ans":true,"exp":"取締役役会非設置会社では，各取締役役が原則として会社を代表するが（349条1項本文2項），定款・定款の定めに基づく取締役役の互選・株主総会決議によって代表取締役役を定めることもできる（349条3項）。","diff":"A"},{"no":333,"topic":"代表取締役","q":"非取締役役会設置会社は，取締役役の互選によって取締役役の中から代表取締役役を定めることができる。なお，非取締役役会設置会社には，2人以上の取締役役が置かれているものとし，定款に別段の定めはないものとする。","ans":false,"exp":"非取締役役会設置会社では，各取締役役が原則として会社を代表するが（349条1項本文2項），定款・定款の定めに基づく取締役役の互選・株主総会決議によって代表取締役役を定めることもできる（349条3項）。問題文（実際の試験問題）に「定款に別段の定めはない」とあるから，定款の定めに基づかない（直接の）互選や株主総会決議によって代表取締役役を定めることはできない。","diff":"A"},{"no":334,"topic":"代表取締役","q":"2人以上の取締役役が置かれている取締役役会設置会社でない株式会社（以下「非取締役役会設置会社」という。）に関し，代表取締役役その他非取締役役会設置会社を代表する取締役役を定めた場合には，それ以外の取締役役は当該非取締役役会設置会社を代表する権限を有しない。","ans":true,"exp":"取締役役会非設置会社でも，定款・定款の定めに基づく取締役役の互選・株主総会決議によって代表取締役役を定めることができ（349条3項），その場合はその者だけが会社を代表する（同条1項ただし書）。","diff":"A"},{"no":335,"topic":"代表取締役","q":"代表取締役役が取締役役の地位を保持しつつ辞任により代表取締役役を退任した場合において，代表取締役役であることにより代表取締役役が欠けた場合には，当該退任した代表取締役役は，新たに選定された代表取締役役（一時代表取締役役の職務を行うべき者を含む。）が就任するまで，なお代表取締役役としての権利義務を有する。","ans":true,"exp":"代表取締役役権利義務者制度（351条1項）である。この制度は，代表取締役役が「任期満了」または「辞任」により退任した場合（問題文），または定款で定めた員数が欠けた場合，代表取締役役が任期満了により退任した場合もしくは辞任した場合（問題文）に適用される。","diff":"A"},{"no":336,"topic":"代表取締役","q":"代表取締役役の解職により，株式会社の代表取締役役が欠けた場合には，新たに選定された代表取締役役（一時代表取締役役の職務を行うべき者を含む。）が就任するまで，解職された当該代表取締役役は，なお代表取締役役としての権利義務を有する。","ans":false,"exp":"代表取締役役権利義務者制度（351条1項）が適用されるのは，代表取締役役が「任期満了」または「辞任」により退任した場合であり，「解職」された場合は適用がない。","diff":"B"},{"no":337,"topic":"代表取締役","q":"株式会社は，定款により代表取締役役の代表権に制限を加えた場合には，そのような制限を知らない第三者には，当該制限を対抗することはできない。","ans":true,"exp":"代表取締役役の代表権は，可制限的なものである（349条5項）。","diff":"A"},{"no":338,"topic":"代表取締役","q":"株式会社は，定款により代表取締役役の代表権に制限を加えた場合には，そのような制限を知らない第三者には，当該制限を対抗することはできない。","ans":true,"exp":"代表取締役役の代表権は，可制限的なものである（349条5項）。","diff":"A"},{"no":339,"topic":"代表取締役","q":"非取締役役会設置会社の業務に関する裁判外の行為をする代表取締役役の権限につき，その一部を制限する旨の定款の定めは，無効である。","ans":false,"exp":"（取締役役会設置会社か否かに関係なく）代表取締役役の包括的代表（349条4項）を定款等で制限することは可能である。ただし，当該制限は善意の第三者に対抗できないだけである（同条5項）。","diff":"A"},{"no":340,"topic":"代表取締役","q":"2人以上の取締役役が置かれている非取締役役会設置会社で代表取締役役が選定された場合において，非取締役役会設置会社の業務に関する裁判外の行為をする代表取締役役の権限に加えた制限は，善意の第三者に対抗することができない。","ans":false,"exp":"（取締役役会設置会社か否かに関係なく）代表取締役役の包括的代表（349条4項）を定款等で制限することは可能である。ただし，当該制限は善意の第三者に対抗できないだけである（同条5項）。","diff":"A"},{"no":341,"topic":"代表取締役","q":"最高裁判所の判例によれば，会社法の規定に基づき取締役役会の決議を経なければならないにもかかわらず，これを経ないで代表取締役役が会社を代表して第三者と契約を締結した場合，第三者が当該決議を経ていないことを知ることができなかったときには，その契約は無効である。","ans":false,"exp":"「取締役役会の決議を欠く代表取締役役の（個々的）取引行為の効力（代表取締役役の専断的行為の効力）」の問題。判例は民法93条1項ただし書類推適用説の立場に立つと評価されている。","diff":"A"},{"no":342,"topic":"代表取締役","q":"最高裁判所の判例によれば，代表取締役役が自己の利益を図る目的で会社を代表して第三者と契約を締結した場合，客観的にはその行為が代表権の範囲内にある以上，第三者が代表取締役役の目的を知っていたとしても，その契約は有効である。","ans":false,"exp":"「代表取締役役の権限濫用（代表権の濫用）」の問題。判例は民法107条類推適用説の立場に立つと評価でき，第三者が悪意 or 善意・有過失の場合は，当該行為は無効となるとする。","diff":"A"},{"no":343,"topic":"代表取締役","q":"最高裁判所の判例の趣旨によれば，「代表取締役役代行者」という名称は，表見代表取締役役における株式会社を代表する権限を有するものと認められる名称には該当しない。","ans":false,"exp":"判例は，「表見代表取締役役代行者」という名称は，表見代表取締役役制度（354条）における会社を代表する権限を有すると認められる名称（いかにも代表権を有するかのような名称）に該当するとする。ほかに「取締役役会長」も判例は上記名称に該当するとする。","diff":"B"},{"no":344,"topic":"代表取締役","q":"最高裁判所の判例によれば，表見代表取締役役制度により第三者が保護されるためには，善意であればよく，過失があってもかまわない。","ans":false,"exp":"354条は「善意」とあるが，善意のほかに無重過失が要求される（判例）。","diff":"A"},{"no":345,"topic":"代表取締役","q":"最高裁判所の判例によれば，株式会社が使用人に社長や副社長等の名称の使用を許諾し，その使用人が株式会社を代表して第三者と取引を行った場合，その第三者が善意・無重過失であったとしても，株式会社がその第三者に対して責任を負うことはない。","ans":false,"exp":"社長等の名称を付与された者（そして代表行為を行った者）が，平取締役役でなく，使用人の場合も，354条を類推適用して，相手方は保護される（判例）。","diff":"B"},{"no":346,"topic":"取締役の義務(競業取引規制)","q":"取締役役会設置会社でない株式会社において，取締役役が，自己又は第三者のために株式会社の事業の部類に属する取引をしようとするときは，株主総会において，当該取引につき重要な事実を開示し，その承認を受けなければならない。","ans":true,"exp":"競業取引規制である（356条1号）。取締役役会非設置会社では株主総会の普通決議（309条1項）による承認を受ける必要がある。なお，取締役役会設置会社では取締役役会の承認が必要となる（365条1項）。","diff":"A"},{"no":347,"topic":"取締役の義務(競業取引規制)","q":"監査等委員会設置会社において，監査等委員である取締役役が，自己のために株式会社の事業の部類に属する取引をしようとするときは，当該取引につき取締役役会の承認を受けることを要しない。","ans":false,"exp":"監査等委員である取締役役も「取締役役」である以上，競業取引規制の対象となり，取締役役会の承認が要求される（356条1号1号，365条1項）。","diff":"A"},{"no":348,"topic":"取締役の義務(競業取引規制)","q":"取締役役会設置会社の取締役役は，自己のために株式会社の事業の部類に属する取引をした場合には，当該取引後，遅滞なく，当該取引についての重要な事実を取締役役会に報告しなければならない。","ans":true,"exp":"競業取引をした取締役役には，取締役役会設置会社の場合だけ，取締役役会の承認を得たか否かにかかわらず，事後の取締役役会への報告義務がある（365条2項）。","diff":"A"},{"no":349,"topic":"取締役の義務(競業取引規制)","q":"取締役役会設置会社の取締役役が競業避止義務に違反して取締役役会の承認を得ずに競業取引を行った場合，会社の利益を保護するため，取締役役と取引の相手方との取引行為は無効となる。","ans":false,"exp":"取引の安全の観点から有効である（通説）。無効としても，会社の利益は保護できない。","diff":"A"},{"no":350,"topic":"取締役の義務(競業取引規制)","q":"取締役役会設置会社において，取締役役は，競業取引または利益相反取引を行うに際して事前に取締役役会の承認を得たときであっても，会社に対する損害賠償責任を負う場合がある。","ans":true,"exp":"会社の承認の有無にかかわらず，会社に損害が生じた場合は，任務懈怠があれば（そして原則として故意・過失があれば），会社に損害賠償責任を負う（423条1項）。","diff":"A"},{"no":351,"topic":"取締役の義務(競業取引規制)","q":"取締役役会設置会社でない株式会社において，取締役役が，自己のために株式会社の事業の部類に属する取引をした場合，株主総会の承認を受けていたとしても，当該取締役役は，取締役役によって当該会社に生じた損害についての会社に対する賠償責任は，任務を怠ったことが当該取締役役の責めに帰することができない事由によるものであることをもって免れることはできない。","ans":true,"exp":"競業取引（356条1号）に関する取締役役の任務懈怠責任は，無過失責任である（423条1項，なお428条1項参照）。よって，承認の有無にかかわらず，取締役役に損害賠償責任を負う。取締役役の任務懈怠責任は，過失責任であるが，利益相反直接取引（自己のための利益相反取引）をした取締役役の任務懈怠責任は，無過失責任とされている（428条1項）。","diff":"A"},{"no":352,"topic":"取締役の義務(競業取引規制)","q":"取締役役会設置会社でない株式会社において，取締役役が，株主総会の承認を受けずに自己又は第三者のために株式会社の事業の部類に属する取引をしたときは，会社に対し，これによって生じた損害を賠償する責任を負い，当該取引又は第三者が得た利益の額は，当該損害の額と推定される。","ans":true,"exp":"会社の承認の有無にかかわらず，取締役役は任務懈怠責任（423条1項）を負う。ただし，競業取引では（利益相反取引と違い），取締役役の利益は会社の損失を反映することが多いから，取引または第三者が得た利益の額は損害額と推定される（423条2項，会社の承認を得ずに競業取引を行った場合）。","diff":"A"},{"no":353,"topic":"取締役の義務(競業取引規制)","q":"指名委員会等設置会社でない取締役役会設置会社の取締役役が，自己のために競業取引をすることについて当該取締役役会設置会社に取締役役会の承認を受けた場合，当該取締役役の株式会社に対する任務懈怠責任の追及において，供与した利益の額が当該取締役役の任務懈怠によって当該株式会社に生じた損害の額と推定される。","ans":false,"exp":"損害額が推定されるのは，会社の承認を得ずに競業取引が行われた場合である（423条2項）。","diff":"A"},{"no":354,"topic":"取締役の義務(競業取引規制)","q":"自己又は第三者のために株式会社の事業の部類に属する取引をした取締役役は，その取引によって会社に損害が生じたときは，承認の有無を問わず，その任務を怠ったものと推定される。","ans":false,"exp":"競業取引において推定されるのは，任務懈怠でなく，損害額である（423条2項，会社の承認を得ずに競業取引を行った場合）。任務懈怠の推定規定が置かれているのは，利益相反取引の場合（同条3項）。","diff":"A"},{"no":355,"topic":"取締役の義務(競業取引規制)","q":"監査役設置会社においては，取締役役は，第三者のために会社と取引をしようとするときは，監査役会の承認を受けなければならない。","ans":false,"exp":"取締役役が利益相反取引をしようとする場合は，監査役設置会社では，取締役役役会でなく，取締役役会の承認を受けなければならない（356条1号2号，365条1項）。なお，監査役設置会社は取締役役会設置会社である（327条1項2号）。","diff":"A"},{"no":356,"topic":"取締役の義務(競業取引規制)","q":"最高裁判所の判例によれば，会社が取締役役に金銭を貸し付ける契約は，取締役役会設置会社では取締役役会の承認がなければ無効である。","ans":true,"exp":"利益相反直接取引（356条1号2号，365条1項）のうちの自己取引（「自己…のために」）にあたる（356条1号2号，365条1項）。","diff":"A"},{"no":357,"topic":"取締役の義務(競業取引規制)","q":"最高裁判所の判例によれば，指名委員会等設置会社でない取締役役会設置会社に対し取締役役が無利息，無担保で金銭を貸し付ける行為は，取締役役会による承認を必要としない。","ans":true,"exp":"この場合は，会社の利益を害するおそれがないから，利益相反取引（直接取引の「自己…のために」）にあたらず，会社の承認は不要である（判例）。","diff":"A"},{"no":358,"topic":"取締役の義務(競業取引規制)","q":"AB両会社とも取締役役会設置会社として，甲が，A会社の代表権のない取締役役とB会社の代表取締役役を兼任している場合に，甲がB会社を代表してA会社と取引するときは，B会社の取締役役会の承認が必要であるが，A会社の取締役役会の承認は必要ない。","ans":true,"exp":"A社の取締役役甲は，B社（第三者）のために（A社の名義と実質とで取引する第三者として）A社と取引するから，これはA社との関係では「第三者のために」する利益相反取引（直接取引）にあたり，A社の取締役役会の承認が必要となる（356条1号2号，365条1項）。これに対して，甲がA会社を代表してB社と取引するときは，B社の取締役役会の承認が必要となる（同規定）。","diff":"A"},{"no":359,"topic":"取締役の義務(競業取引規制)","q":"指名委員会等設置会社でない取締役役会設置会社である甲株式会社の代表権のない取締役役Aが，第三者のために甲株式会社と取引をする場合，A以外の者が甲株式会社を代表して当該取引をするときには，当該取引については甲株式会社の取締役役会による承認が必要である。","ans":true,"exp":"甲会社の取締役役Aは，三者のために（名義上は三者の代表または代理人として）甲会社と取引するから，これは甲会社との関係では「第三者のために」する利益相反取引（直接取引）にあたり，甲会社の取締役役会の承認が必要となる（356条1号2号，365条1項）。","diff":"A"},{"no":360,"topic":"取締役の義務(競業取引規制)","q":"取締役役会設置会社において，競業取引や利益相反取引の承認決議が取締役役会で行われる場合は，当該取締役役は特別利害関係取締役役にあたり，取締役役会の議決に加わることができない。","ans":true,"exp":"369条2項。","diff":"A"},{"no":361,"topic":"取締役の義務(競業取引規制)","q":"最高裁判所の判例の趣旨によれば，取締役役会設置会社の代表取締役役が当該会社から不動産を買い受け，これを第三者に転売した場合，当該第三者が当該会社と当該代表取締役役との間で会社の承認を得ない利益相反取引は無効だが，会社はその事実を立証した場合において，その者の悪意を立証しなければ無効を主張できないとする。","ans":false,"exp":"判例は相対的無効説に立ち，会社の承認を得ない利益相反取引は無効だが，利益相反取引規制の趣旨は会社の利益保護にあるから，取引の相手方である取締役役と第三者の側からは無効を主張できないとする。","diff":"A"},{"no":362,"topic":"取締役の義務(競業取引規制)","q":"最高裁判所の判例の趣旨によれば，取締役役会設置会社が取締役役の個人債務を保証する行為について取締役役会の承認がないときは，会社は保証契約の相手方である債権者に対して常に保証債務の履行を拒絶することができる。","ans":false,"exp":"判例は相対的無効説に立ち，会社の承認を得ない利益相反取引は無効だが，利益相反取引規制の趣旨は会社の利益保護にあるから，取引の相手方である取締役役や第三者の側からは，その者の悪意を立証しなければ無効を主張できないとする。","diff":"A"},{"no":363,"topic":"取締役の義務(競業取引規制)","q":"最高裁判所の判例の趣旨によれば，取締役役を債務者（借主）とし，株式会社を債権者（貸主）とする金銭消費貸借契約が取締役役会の承認を受けていない場合には，当該取締役役は当該取引が無効であることを当該株式会社に対して主張することができない。","ans":true,"exp":"判例は相対的無効説に立ち，会社の承認を得ない利益相反取引は無効だが，利益相反取引規制の趣旨は会社の利益保護にあるから，取引の相手方である取締役役や第三者の側からは，無効を主張できないとする。","diff":"B"},{"no":364,"topic":"取締役の義務(競業取引規制)","q":"最高裁判所の判例の趣旨によれば，取締役役が業務を行う場合も，株主全員の合意がある場合は，会社の承認は不要であり，利益相反取引がたとえ会社の承認なく行われた場合でも有効である。","ans":true,"exp":"判例。両制度の規制目的は株主に不利な取引を防止することにあるから，株主全員の合意があれば，会社の承認は不要であり，利益相反取引がたとえ会社の承認なく行われた場合でも有効である（判例）。","diff":"A"},{"no":365,"topic":"取締役の義務(競業取引規制)","q":"最高裁判所の判例の趣旨によれば，取締役役会設置会社において，取締役役が利益相反取引をする場合は，たとえ当該取締役役が当該会社の全株式を保有している一人株主である場合であっても，取締役役会の承認が必要である。","ans":true,"exp":"利益相反取引（356条1号2号，365条1項）をする取締役役が当該会社の一人株主である場合は，取締役役会の承認は不要である（判例）。","diff":"B"},{"no":366,"topic":"取締役の義務(競業取引規制)","q":"取締役役会設置会社における取締役役が利益相反取引によって取締役役会設置会社に損害が生じた場合は，会社の承認の有無にかかわらず，利益相反取締役役等の任務懈怠が推定される。","ans":true,"exp":"利益相反取引によって会社に損害が生じた場合は，会社の承認の有無にかかわらず，利益相反取引等の任務懈怠が推定される（423条3項柱書）。","diff":"A"},{"no":369,"topic":"取締役の義務(競業取引規制)","q":"自己のために会社と取引をした取締役役は，その取引によって会社に損害を生じたときは，任務を怠ったものと，会社法上，推定される。","ans":true,"exp":"利益相反取引によって会社に損害が生じた場合は，会社の承認の有無にかかわらず，利益相反取引等の任務懈怠が推定される（423条3項1号）。","diff":"A"},{"no":371,"topic":"取締役の義務(競業取引規制)","q":"監査等委員会設置会社において，代表取締役が，取締役会の承認を受けることなく，自己のために株式会社と取引をした場合には，当該取引によって当該代表取締役が得た利益の額は，当該代表取締役の任務懈怠によって当該株式会社に生じた損害の額と推定される。","ans":true,"exp":"利益相反取引において推定されるのは，損害額でなく，任務懈怠である（423条3項）。損害額の推定規定が置かれているのは，競業取引の場合（同条2項，会社の承認を得ずに競業取引を行った場合）。","diff":"A"},{"no":374,"topic":"取締役の義務(競業取引規制)","q":"取締役会設置会社（指名委員会等設置会社を除く。）の取締役は，株主総会の決議を経ずに，株式会社から賞与を受けることができる。なお，定款及びこれに基づき会社が定める規則等に別段の定めはないものとする。","ans":false,"exp":"取締役等は，定款または株主総会普通決議によって定めなければならない（361条1項2項）。なお，賞与も「報酬等」に含まれる。","diff":"A"},{"no":382,"topic":"取締役の義務(競業取引規制)","q":"会社が取締役にストックオプションとして新株予約権を無償付与する場合も，取締役の報酬等にあたり，その額と具体的な内容を定款または株主総会決議によって定める必要がある。","ans":false,"exp":"この場合は，「当該募集新株予約権の数の上限その他法務省令で定める事項」を定款・株主総会普通決議で定める必要がある（361条1項柱書4号）。","diff":"A"},{"no":387,"topic":"取締役の義務(その他)","q":"監査役設置会社と取締役との間の訴えについては，監査役が会社を代表する。","ans":true,"exp":"監査役設置会社では，監査役が会社を代表する（386条1項1号）。","diff":"A"},{"no":396,"topic":"取締役の義務(その他)","q":"取締役会設置会社ではなく監査役設置会社でもない会社の取締役は，会社に著しい損害を及ぼすおそれのある事実があることを発見したときは，直ちに，当該事実を株主に報告しなければならない。","ans":true,"exp":"取締役の報告義務の宛先は，監査役設置会社や監査役設置会社でない場合は，株主である（357条1項）。","diff":"A"},{"no":397,"topic":"取締役の義務(その他)","q":"取締役会設置会社でない監査役設置会社の取締役は，会社に著しい損害を及ぼすおそれのある事実があることを発見したときは，直ちに，当該事実を株主に報告しなければならない。","ans":false,"exp":"取締役の報告義務の宛先は，監査役設置会社では監査役である（357条1項かっこ書）。","diff":"A"},{"no":398,"topic":"取締役の義務(その他)","q":"監査役設置会社の取締役は，会社に著しい損害を及ぼすおそれのある事実があることを発見したときは，直ちに，当該事実を監査役会に報告しなければならない。","ans":false,"exp":"取締役の報告義務の宛先は，監査役設置会社では，監査役である（357条1項2項）。","diff":"A"},{"no":401,"topic":"取締役の義務(その他)","q":"取締役会設置会社でない大会社においては，取締役は，定款に別段の定めがある場合を除き，その過半数をもって，株式会社の業務並びに当該株式会社及びその子会社から成る企業集団の業務の適正を確保するための体制の整備を決定しなければならず，決定しないことは許されない。","ans":true,"exp":"大会社であれば，取締役会非設置会社でも，内部統制システムの整備義務がある（348条4項）。なお，取締役会非設置会社で取締役が2人以上いる場合に，内部統制システムの整備等の業務執行の決定は，（定款に別段の定めがある場合を除き）取締役の過半数で決定しなければならず，（定款をもってしても）各取締役にその決定を委任できない（同条3項2項）。","diff":"A"},{"no":402,"topic":"取締役の義務(その他)","q":"監査役設置会社の業務の適正を確保するための体制（以下「内部統制システム」という。）に関し，大会社である取締役会設置会社においては，取締役会は，内部統制システムの整備について決定しなければならない。","ans":true,"exp":"大会社である取締役会設置会社では，取締役会に内部統制システムの整備義務がある（362条5項）。なお，当該整備の決定は取締役会専決事項である（362条4項6号）。","diff":"A"},{"no":409,"topic":"会計参与","q":"会計参与設置会社においては，会計参与は，取締役が作成した計算書類及びその附属明細書，並びに臨時計算書類を監査しなければならない。","ans":false,"exp":"会計参与は取締役・執行役と同じして計算関係書類を「作成」する（374条1項6項）。実質的にはその作成を指導・監督する立場にあるが，あくまで共同作成者である。","diff":"A"},{"no":410,"topic":"会計参与","q":"会計参与は，弁護士若しくは弁護士法人又は公認会計士若しくは監査法人でなければならない。","ans":false,"exp":"「弁護士・弁護士法人」が誤り。会計参与は，公認会計士・監査法人・税理士・税理士法人に限られている（333条1項）。","diff":"A"},{"no":411,"topic":"会計参与","q":"税理士法人は，会計参与になることができない。","ans":false,"exp":"会計参与は公認会計士・監査法人・税理士・税理士法人に限定されているが（333条1項），税理士法人は会計参与になれる。","diff":"A"},{"no":412,"topic":"会計参与","q":"株式会社の会計参与は，当該株式会社又はその子会社の監査役となることができない（株式会社の子会社の監査役は，当該株式会社の会計参与となることができる）。","ans":true,"exp":"会社・子会社の取締役・監査役・執行役・使用人は，当該会社の会計参与になれない（333条3項1号）。会計参与には独立性が要求されるからである。","diff":"A"},{"no":413,"topic":"会計参与","q":"株式会社の支配人は，当該会社の会計参与となることができない。","ans":true,"exp":"会社・子会社の取締役・監査役・執行役・支配人その他の使用人は，当該会社の会計参与になれない（333条3項1号）。","diff":"A"},{"no":414,"topic":"会計参与","q":"株式会社の取締役は，当該株式会社の親会社の会計参与となることができる。","ans":false,"exp":"会社・子会社の取締役・監査役・執行役・使用人は，当該会社の会計参与になれない（333条3項1号）。したがって，子会社の取締役等は親会社の会計参与になれない。","diff":"A"},{"no":422,"topic":"会計参与","q":"会社は，会計参与及び会計監査人をいつでも株主総会の決議によって解任することができる。","ans":true,"exp":"いつでも，理由のいかんを問わず，株主総会の普通決議で解任できる（339条1項）。なお，正当な理由がある場合を除き，解任された者は，会社に対して，解任によって生じた損害の賠償請求ができる（同条2項）。","diff":"A"},{"no":446,"topic":"監査役・監査役会","q":"監査役は，当該会社の会計参与を兼ねることはできない。","ans":true,"exp":"333条3項1号。会計参与の兼任禁止規定の中に置かれている。","diff":"A"},{"no":447,"topic":"監査役・監査役会","q":"監査役は，当該株式会社の子会社の取締役役を兼ねることができない。","ans":true,"exp":"335条2項。監査する者とされる者が同じ者になってはいけない。","diff":"A"},{"no":452,"topic":"監査役・監査役会","q":"株式会社の監査役は，当該株式会社の親会社の取締役役を兼ねることができない。","ans":false,"exp":"子会社の監査役は，親会社の取締役・使用人を兼任できる。監査役には（381条3項4項）はあるが，親会社調査権はないので，監査役の兼任禁止規定（335条2項）の趣旨は妥当しないからである。","diff":"A"},{"no":461,"topic":"監査役・監査役会","q":"監査役が2人ある監査役設置会社においては，当該2人の監査役の同意を得なければ，取締役は，監査役の選任に関する議案を株主総会に提出することができない。","ans":true,"exp":"取締役が監査役選任議案を総会に提出するには，監査役が2人以上いる場合はその過半数の同意が必要となる（343条1項）。2人の過半数は2人である。","diff":"A"},{"no":462,"topic":"監査役・監査役会","q":"監査役設置会社では，取締役が監査役の選任に関する議案を株主総会に提出するときは，監査役会の同意を得なければならない。","ans":true,"exp":"取締役が監査役選任議案を総会に提出するには，監査役設置会社では監査役会の同意が必要となる（343条1項3項）。","diff":"A"},{"no":463,"topic":"監査役・監査役会","q":"株式会社が，株主総会の決議により監査役を解任するには，特別決議によらなければならない。","ans":true,"exp":"監査役は，選任は普通決議だが（341条），解任は特別決議が必要となる（339条1項，309条2項7号。なお343条4項）。","diff":"A"},{"no":466,"topic":"監査役・監査役会","q":"数人の監査役がいる場合（監査役会がある場合も含む。）でも，監査役は各自が会社の機関であり，各自で取締役または会計参与の職務執行の監査権限その他の監査役の職務権限を有する。","ans":true,"exp":"監査役は独任制の機関である（381条，監査役会がある場合について390条2項柱書ただし書参照）。","diff":"A"},{"no":470,"topic":"監査役・監査役会","q":"監査役は取締役会の構成員ではないが，取締役会は監査役の出席を拒否することができない。","ans":true,"exp":"監査役には取締役会出席義務があるため（383条1項），取締役会は拒否できない。","diff":"A"},{"no":472,"topic":"監査役・監査役会","q":"監査役は，取締役が会社の目的の範囲外の行為その他法令もしくは定款に違反する行為をするおそれがある場合にはいつでも，その取締役に対して，その行為の差止請求権を行使することができる。","ans":false,"exp":"監査役による取締役の違法行為の差止め請求の行使が認められるのは，「いつでも」ではなく，「会社に著しい損害が生ずるおそれがあるとき」に限られる（385条1項）。","diff":"A"},{"no":473,"topic":"監査役・監査役会","q":"監査役設置会社において，監査役が取締役の違法行為の差止めを請求するためには，監査役会の決議に基づくことを要しない。","ans":true,"exp":"385条1項により，監査役設置会社でも監査役会の決議は要求されず，監査役独自の判断で差止めできる。","diff":"A"},{"no":482,"topic":"監査役・監査役会","q":"公開会社は，定款の定めによっても，監査役の監査の範囲を会計に関するものに限定することはできない。","ans":true,"exp":"389条1項。非公開会社（監査役設置会社および会計監査人設置会社を除く）では，定款で会計限定監査役を設置できる。","diff":"A"},{"no":495,"topic":"監査役・監査役会","q":"監査役設置会社では，監査役は3人以上でなければならず，そのうち過半数は社外監査役でなければならない。","ans":false,"exp":"後半が誤り。「過半数」ではなく「半数以上」（335条3項）。","diff":"A"},{"no":496,"topic":"監査役・監査役会","q":"監査役設置会社が大会社であるか否かを問わず，監査役会は，監査役の中から常勤監査役を選定しなければならない。","ans":true,"exp":"監査役会は，監査役の中から常勤の監査役を選定しなければならない（390条3項）。大会社か否かは問わない。","diff":"A"},{"no":512,"topic":"会計監査人","q":"会計監査人の任期は，選任後1年以内に終了する事業年度のうち最終のものに関する定時株主総会の終結の時までである。","ans":true,"exp":"338条1項。なお，再任擬制の制度がある（同条2項）。","diff":"A"},{"no":522,"topic":"会計監査人","q":"株主総会の決議により会計監査人を解任するには，特別決議によらなければならない。","ans":false,"exp":"株主総会の決議による会計監査人の解任は，定款に拒否種付種類株式（108条1項8号2項8号）を発行するなどの別段の定めがない限り，309条1項の普通決議によりなされる（339条1項）。","diff":"A"},{"no":536,"topic":"会計監査人","q":"会計監査人は，いつでも，取締役及び会計参与並びに支配人その他の使用人に対し，会計に関する報告を求めることができる。","ans":true,"exp":"会計監査人の当該会社の取締役等に対する会計関連報告要求権は「いつでも」可能である（396条2項）。","diff":"A"},{"no":555,"topic":"指名委員会等設置会社","q":"指名委員会等設置会社の取締役は，株主総会で選任され，解任される。","ans":true,"exp":"329条1項，339条1項。指名委員会等設置会社でない会社の取締役役と同様，ただし，総会に提出する取締役の選任・解任議案の内容は指名委員会が決定する（404条1項）。","diff":"A"},{"no":557,"topic":"指名委員会等設置会社","q":"指名委員会等設置会社の取締役も，指名委員会等設置会社でない会社と同様に，当該会社の支配人その他の使用人を兼ねることができる。","ans":false,"exp":"指名委員会等設置会社では，取締役と使用人との兼任が禁止される（331条4項）。執行と監督を区別した趣旨が没却されるから。","diff":"A"},{"no":558,"topic":"指名委員会等設置会社","q":"指名委員会等設置会社においては，執行役が取締役を兼任することは認められていない。","ans":false,"exp":"執行役と取締役は兼任できる（402条6項）。人材確保の必要性，および取締役会とのパイプ役として有益だから。","diff":"A"},{"no":594,"topic":"指名委員会等設置会社","q":"指名委員会等設置会社では，株主総会に提出する取締役の選任及び解任に関する議案の内容は，指名委員会によって決定される。また，取締役会はその決定を執行役に委任することができない。","ans":true,"exp":"指名委員会等設置会社では，取締役・会計参与の選任・解任の議案の内容は，指名委員会が決定（最終決定）する（404条1項）。したがって，上記内容については，そもそも取締役会に決定権限がない以上，決定権限もない取締役会が当該決定を執行役に委任できるはずもない（416条4項5号かっこ書で除外されているのはそのため）。","diff":"A"},{"no":616,"topic":"指名委員会等設置会社","q":"執行役，取締役，会計参与又は会計監査人が委員の全員に対して指名委員会等に報告すべき事項を通知したときは，当該事項を指名委員会等へ報告することを要しない。","ans":true,"exp":"414条。","diff":"A"},{"no":617,"topic":"指名委員会等設置会社","q":"公開会社である指名委員会等設置会社は，執行役が株主でなければならない旨を定款で定めることができない。","ans":true,"exp":"402条5項本文。取締役の場合（331条2項本文）と同様。","diff":"A"},{"no":622,"topic":"指名委員会等設置会社","q":"執行役は，株式会社に対して善管注意義務を負うが，取締役とは異なり競業避止義務は負わない。","ans":false,"exp":"後半が誤り。執行役は会社に対して忠実義務（419条2項，355条）も負い，取締役と同様，競業取引・利益相反取引規制がある（419条2項，356条，365条2項）。","diff":"A"},{"no":657,"topic":"役員等の損害賠償責任","q":"取締役・執行役が善管注意義務や忠実義務に違反した行為をして会社に損害が生じた場合，当該取締役・執行役は会社に対して任務懈怠責任を負いうる。","ans":true,"exp":"善管注意義務違反 or 忠実義務違反→任務懈怠責任（423条1項）。","diff":"A"},{"no":658,"topic":"役員等の損害賠償責任","q":"役員等の任務懈怠責任を免除するためには，株主総会の特殊決議が必要である。","ans":false,"exp":"任務懈怠責任（423条1項）の免除には，総株主の同意が必要となる（424条）。","diff":"A"},{"no":661,"topic":"役員等の損害賠償責任","q":"取締役が職務を怠ったことに基づいて会社に対して負う損害賠償責任を免除するためには，それが一部免除でも，総株主の同意がなければならない。","ans":false,"exp":"任務懈怠責任の免除（広義の意味）には，424条に加えて，株主総会特別決議等による一部免除制度もある（425条〜427条）。","diff":"A"},{"no":677,"topic":"役員等の損害賠償責任","q":"会計参与がその職務を行うについて悪意又は重大な過失があったときは，当該会計参与は，これによって第三者に生じた損害を賠償する責任を負う。","ans":true,"exp":"「役員等」の第三者に対する損害賠償責任である（429条1項）。","diff":"A"},{"no":687,"topic":"株主の監督是正権","q":"株主名簿の閲覧又は謄写の請求をする権利は，単独株主権である。","ans":true,"exp":"株主名簿閲覧謄写請求権は単独株主権である（125条2項）。","diff":"B"},{"no":688,"topic":"株主の監督是正権","q":"株主が会社設立の無効の訴えを提起する権利は，少数株主権であって，単独株主権ではない。","ans":false,"exp":"株の設立無効の訴え提起権（828条1項1号）は，単独株主権である（同条2項1号）。","diff":"A"},{"no":689,"topic":"株主の監督是正権","q":"新株発行の無効の訴えを提起する権利は，少数株主権である。","ans":false,"exp":"株主の新株発行無効の訴え提起権（828条1項2号）は，単独株主権である（同条2項2号）。","diff":"A"},{"no":690,"topic":"株主の監督是正権","q":"株主が株式会社に対して取締役役の責任を追及する訴えの提起を請求する権利は，単独株主権である。なお，単元株制度は採用されておらず，また，定款に別段の定めはないものとする。","ans":true,"exp":"株主による責任追及等の訴え（代表訴訟）（847条）は，単独株主権である（同条1項）。","diff":"A"},{"no":691,"topic":"株主の監督是正権","q":"株主が株式会社に対して会計帳簿の閲覧又は謄写を請求する権利は，単独株主権である。なお，単元株制度は採用されておらず，また，定款に別段の定めはないものとする。","ans":false,"exp":"株主の会計帳簿閲覧謄写請求権（433条）は，少数株主権である（同条1項）。","diff":"A"},{"no":692,"topic":"株主の監督是正権","q":"株主が取締役に対して株主総会の招集を請求する権利は，少数株主権である。なお，単元株制度は採用されておらず，また，定款に別段の定めはないものとする。","ans":true,"exp":"株主による株主総会招集請求権・招集権（297条）は，少数株主権である（同条1項）。","diff":"A"},{"no":693,"topic":"株主の監督是正権","q":"総株主の議決権の100分の1以上の議決権を有する株主は，会計帳簿の閲覧を請求することができる。","ans":false,"exp":"「100分の3以上」が正しい（433条1項）。","diff":"B"},{"no":699,"topic":"株主の監督是正権","q":"株式会社の親会社社員は，その権利を行使するため必要があるときは，請求の理由を明らかにした上で，裁判所の許可を得て，当該株式会社の会計帳簿の閲覧を請求することができる。","ans":true,"exp":"親会社社員にも，一定の要件のもと，会計帳簿閲覧謄写請求権が認められている（433条3項）。","diff":"A"},{"no":700,"topic":"株主の監督是正権","q":"株式会社の子会社の社員は，その権利を行使するため必要があるときは，裁判所の許可を得て，当該株式会社に対して会計帳簿の閲覧を請求することができる。","ans":false,"exp":"「子会社」を「親会社」にすれば，正しい（433条3項）。","diff":"A"},{"no":701,"topic":"株主の監督是正権","q":"株式会社の債権者は，自己の債権を保全するため必要があるときは，裁判所の許可を得て，当該株式会社に対し，会計帳簿又はこれに関する資料の閲覧又は謄写の請求をすることができる。","ans":false,"exp":"そもそも会社債権者には会計帳簿閲覧謄写請求権はない（433条参照）。","diff":"A"},{"no":702,"topic":"株主の監督是正権","q":"最高裁判所の判例に趣旨によれば，会計帳簿等の閲覧謄写請求の理由は，具体的に記載されなければならないが，その記載された請求の理由を基礎づける事実が客観的に存在することについての立証は要しない。","ans":true,"exp":"会計帳簿閲覧謄写請求権は当該請求の理由を明らかにして行使する必要がある（433条1項柱書後段）。そして，当該請求の理由は，「具体的に記載されなければならず，上記の請求をするための書面に，その記載された請求の理由を基礎付ける事実が客観的に存在することについての立証を要すると解すべき法的根拠はない」（判例）。","diff":"C"},{"no":703,"topic":"株主の監督是正権","q":"最高裁判所の判例に趣旨によれば，株主が会計帳簿等の閲覧を請求するため株式会社に提出した書面に，「会社財産が適正妥当に運用されているかどうかにつき，会計帳簿等を閲覧したい」と記載されている場合は，当該請求は，理由を具体的に記載してされたものとはいえない。","ans":true,"exp":"会計帳簿等の閲覧は会社運営上極めて重大な事柄に属するから手続を慎重にさせる必要があるし，また，会社において閲覧に応じる義務の存否または閲覧等をさせなければならない会計帳簿の範囲などの判断を容易にさせる必要があるから（判例）。","diff":"C"},{"no":704,"topic":"株主の監督是正権","q":"株主がその権利の確保または行使に関する調査以外の目的で会計帳簿の閲覧を請求したときでも，会社は，これを理由に，その請求を拒否することはできない。","ans":false,"exp":"請求拒否事由にあたり，拒否できる（433条2項1号）。","diff":"B"},{"no":705,"topic":"株主の監督是正権","q":"最高裁判所の判例に趣旨によれば，株式の譲渡につき定款で制限を設けている株式会社において，その有する株式を他に譲渡しようとする株主が，当該株式の適正な価格を算定する目的でした会計帳簿等の閲覧謄写請求は，特段の事情が存しない限り，株主等の権利の確保または行使に関して調査をするために行われたものとは認められない。","ans":false,"exp":"左記の場合は，特段の事情が存しない限り，株主等の権利の確保または行使に関して調査をするために行われたものである（433条2項1号の請求拒否事由に該当しない，判例）。なぜなら，会社が譲渡を承認しない場合合，売買価格について会社等との協議をしたり，裁判所に対して売買価格の決定の申立てをする等の手続が定められているが（144条），当該手続に適切に対処するには，株式の適正な価格を算定するために必要な当該会社の資産状態等を示す会計帳簿等の閲覧等をすることが不可欠だからである。","diff":"C"},{"no":706,"topic":"株主の監督是正権","q":"株式会社は，請求者が当該株式会社の業務の遂行を妨げ，株主の共同の利益を害する目的で会計帳簿又はこれに関する資料の閲覧又は謄写の請求を行ったときは，当該請求を拒むことができる。","ans":true,"exp":"請求拒否事由にあたり，拒否できる（433条2項2号）。","diff":"B"},{"no":707,"topic":"株主の監督是正権","q":"株式会社は，会計帳簿の閲覧請求を適法に行った株主が当該株式会社の業務と実質的に競争関係にある事業を営むものであるときは，当該閲覧請求を拒むことができる。","ans":true,"exp":"「請求者が当該株式会社と業務を実質的に競争関係にある事業を営み，又はこれに従事するものであるとき」は請求拒否事由にあたり，拒否できる（433条2項3号）。","diff":"B"},{"no":708,"topic":"株主の監督是正権","q":"最高裁判所の判例に趣旨によれば，株式会社の会計帳簿等の閲覧謄写請求をした株主が，当該株式会社の業務と実質的に競争関係にある事業を営むものであることを理由として当該請求につき拒絶事由があるというためには，当該株主に会計帳簿等の閲覧謄写によって知り得る情報を自己の競業に利用するなどの主観的意図があることを要する。","ans":false,"exp":"433条2項3号の請求拒否事由があるというためには，「当該株主が当該会社と競業をなす者であるなどの客観的事実が認められればよく，当該株主に会計帳簿等の閲覧謄写によって知り得る情報を自己の競業に利用するなどの主観的意図があることを要しない」（判例）。なぜなら，3号は，2号（会社の業務の遂行を妨げ，株主の共同の利益を害する目的で請求した場合）と異なり，文言上，主観的意図の存在を要求していないし，また，請求時点では株主に主観的意図がなくても，競業関係が存在する以上，閲覧によって得られた情報が競業において競業に利用される危険性は否定できないからである。","diff":"C"},{"no":709,"topic":"株主の監督是正権","q":"株式会社は，請求者が会計帳簿又はこれに関する資料の閲覧又は謄写によって知り得た事実を利益を得て第三者に通報するため当該閲覧等の請求を行ったときは，当該請求を拒むことができる。","ans":true,"exp":"請求拒否事由にあたり，拒否できる（433条2項4号）。","diff":"B"},{"no":710,"topic":"株主の監督是正権","q":"株式会社は，請求者が，過去2年以内において，会計帳簿又はこれに関する資料の閲覧又は謄写によって知り得た事実を利益を得て第三者に通報したことがあるとの理由をもって，会計帳簿又はこれに関する資料の閲覧又は謄写の請求を拒むことができる。","ans":true,"exp":"請求拒否事由にあたり，拒否できる（433条2項5号）。","diff":"B"},{"no":711,"topic":"株主の監督是正権","q":"公開会社において，取締役が法令または定款に違反する行為をしようとする場合に，この取締役の違法行為の差止めを請求できる株主は，総株主の議決権の100分の3以上の議決権を有していなければならない。","ans":false,"exp":"株主による取締役の違法行為差止請求権（360条）は，単独株主権である。","diff":"A"},{"no":712,"topic":"株主の監督是正権","q":"公開会社でない会社において，取締役が法令または定款に違反する行為をしようとする場合に，この取締役の違法行為の差止めを請求できる株主は，定款に別段の定めがある場合を除き，6箇月前から引き続き株式を有していなければならない。","ans":false,"exp":"保有期間要件は，公開会社にだけ要求され，非公開会社には要求されない（360条1項2項）。非公開会社では特定の者を株主にするかどうかは会社が決定するので，少数株主権の濫用を防止する必要がないから。","diff":"A"},{"no":716,"topic":"株主の監督是正権","q":"公開会社の株主は，6か月前から引き続き当該会社の株式を有していなければ，取締役の責任を追及する訴えの提起を会社に対し請求することができない。","ans":true,"exp":"株主による責任追及等の訴えにおける保有期間要件は，公開会社にだけ要求され，非公開会社には要求されていない（847条1項2項）。","diff":"A"},{"no":717,"topic":"株主の監督是正権","q":"株主による責任追及等の訴えにおいて，株主が勝訴し発起人等に金員の支払が命じられた場合は，その金員は株主に支払われる。","ans":false,"exp":"代表訴訟（847条）は，株主が会社のために提起するものだから，株主は会社に給付するよう請求できるにすぎない。","diff":"A"},{"no":718,"topic":"株主の監督是正権","q":"株主による責任追及等の訴えにおいて，判決が確定した場合は，それが株主側の勝訴判決でも敗訴判決でも，判決の効力は会社に及ぶ。","ans":true,"exp":"代表訴訟（847条）は，株主が会社に代わって提起した訴訟だから，勝訴・敗訴を問わず，判決の効力は会社に及ぶ。","diff":"A"},{"no":719,"topic":"株主の監督是正権","q":"株主による責任追及等の訴えにおいて，取締役の責任を追及する訴えの提起を請求された会社は，その請求の日から60日以内に訴えを提起しない場合には，訴えの提起を請求した株主に対し，訴えを提起しない理由を必ず通知しなければならない。","ans":false,"exp":"「必ず」ではなく，株主等から「請求を受けたときは」，遅滞なく通知しなければならない（847条4項）。","diff":"A"},{"no":726,"topic":"株主の監督是正権","q":"株主代表訴訟において敗訴した株主は，必ず会社に対して損害賠償責任を負わなければならない。","ans":false,"exp":"株主等が敗訴した場合で，かつ，悪意があった場合にのみ，損害賠償義務を負う（852条2項）。","diff":"A"},{"no":731,"topic":"株式の意義・株主の権利・種類株式・株主平等の原則","q":"公開会社か公開会社でない株式会社であるかを問わず，株主に剰余金の配当を受ける権利と残余財産の分配を受ける権利の双方を与えない旨の定款の定めは，その効力を有しない。したがって，株主に剰余金の配当を受ける権利も残余財産の分配を受ける権利もない株式を発行することはできない。しかし，株式会社が，株主に剰余金の配当を受ける権利又は残余財産の分配を受ける権利のいずれかを与えない旨の定款の定めを置いた場合には，当該定めは有効である。","ans":true,"exp":"105条2項（株式会社の営利性の根拠条文でもある）。剰余金配当請求権と残余財産分配請求権の両方を与えない旨の定款規定は無効であるが，どちらか一つを与えれば有効である。以上のことは，公開会社でも非公開会社でも同様である。","diff":"A"},{"no":734,"topic":"株式の意義・株主の権利・種類株式・株主平等の原則","q":"取得条件付株式は，一定の事由が生じたときに，会社がその全部を取得する制度であり，たとえ定款で定めても，その一部を取得することは許されない。","ans":false,"exp":"一部を取得することも，あらかじめ一定の事項を定款で定めておけば可能（107条2項3号ヘ，108条2項6号イ）。","diff":"A"},{"no":742,"topic":"株式の意義・株主の権利・種類株式・株主平等の原則","q":"ある種類の株式の株主に株主総会における議決権を与えない旨の定款の定めは無効である。","ans":false,"exp":"定款に定めれば，種類株式として，議決権制限株式を発行できる（108条1項3号）。","diff":"A"},{"no":743,"topic":"株式の意義・株主の権利・種類株式・株主平等の原則","q":"公開会社では，1株に付き2個の議決権を与える旨を定款で定めることができる。","ans":false,"exp":"このような内容は，議決権制限株式として認められない（108条1項3号2項3号参照）。なお，非公開会社であれば，定款で属人的に定めれば可能である（109条2項）。","diff":"B"},{"no":744,"topic":"株式の意義・株主の権利・種類株式・株主平等の原則","q":"株主総会において議決権を行使することができる事項に関する定款の定めは，種類株主総会における議決権の行使にも適用される。","ans":false,"exp":"議決権制限株式は種類株主総会における議決権の行使には適用されない（108条1項3号）。なお，議決権制限株式の種類株主も，当該種類株主総会においては議決権を有する。","diff":"B"},{"no":745,"topic":"株式の意義・株主の権利・種類株式・株主平等の原則","q":"種類株式発行会社が公開会社である場合に，議決権制限株式の数が，発行済株式の総数の2分の1を超えるに至ったときは，直ちに，2分の1以下にするための必要な措置をとらなければならない。","ans":true,"exp":"公開会社では，議決権制限株式の発行数に規制がある（115条）。","diff":"A"},{"no":746,"topic":"株式の意義・株主の権利・種類株式・株主平等の原則","q":"公開会社でない株式会社は，発行済株式の総数の2分の1を超えて議決権制限株式を発行することができない。","ans":false,"exp":"非公開会社では，115条（議決権制限株式の発行数の規制）の規制はない。","diff":"A"},{"no":748,"topic":"株式の意義・株主の権利・種類株式・株主平等の原則","q":"株主総会の普通決議によって，会社がある種類の株式の全部を取得することができる旨の定款の定めは無効である。","ans":true,"exp":"全部取得条項付種類株式は，株主総会の「特別決議」によってその全部を取得できる種類株式である（171条1項，309条2項3号）。108条1項各号は限定列挙であり，これ以外の種類株式は認められない。","diff":"A"},{"no":749,"topic":"株式の意義・株主の権利・種類株式・株主平等の原則","q":"取締役会で決議すべき事項のうち，取締役会の決議のほか，ある種類の株式の株主を構成員とする種類株主総会の決議があることを必要とする旨の定款の定めは無効である。","ans":false,"exp":"拒否権付種類株式として有効である（108条1項8号，323条）。","diff":"A"},{"no":750,"topic":"株式の意義・株主の権利・種類株式・株主平等の原則","q":"株主総会において決議すべき事項のうち，株主総会の決議のほかに，その種類の株式の株主を構成員とする種類株主総会の決議を要する種類株式を発行することができるのは，公開会社でない株式会社に限られる。","ans":false,"exp":"拒否権付種類株式（108条1項8号）は，公開会社でも非公開会社でも発行できる（条文上の制限はない）。","diff":"A"},{"no":758,"topic":"株式の意義・株主の権利・種類株式・株主平等の原則","q":"定款に定めがなくても，種類株式を発行できる場合がある。","ans":false,"exp":"108条1項各号の種類株式を発行するには，同条2項各号の定款の定めが必要である（定款の相対的記載事項）。","diff":"A"},{"no":759,"topic":"株式の意義・株主の権利・種類株式・株主平等の原則","q":"種類株式発行会社においては，発行可能種類株式総数の合計数は，発行可能株式総数と一致しなければならない（発行可能株式総数を超えることができない）。","ans":false,"exp":"一致する必要はない（超えてよい）。現実に発行する種類株式の数が，それぞれの発行可能種類株式総数を超えず，かつ，その合計数が発行可能株式総数を超えなければよい。","diff":"A"},{"no":770,"topic":"株式の意義・株主の権利・種類株式・株主平等の原則","q":"公開会社でない株式会社において，株主総会における議決権に関する事項について，株主ごとに異なる取扱いを行う旨を定款で定めた場合であって，当該定款の定めについての定款変更（当該定款の定めを廃止するものを除く。）をするときは，株主総会の決議は，総株主の議決権の3分の2以上に当たる多数をもって行わなければならない。","ans":true,"exp":"非公開会社における属人的な権利の定め（109条2項）を設ける定款変更は，総会の特殊決議（309条4項として，原則として，総株主の半数以上かつ総株主の議決権の4分の3以上の賛成が必要）。","diff":"A"},{"no":771,"topic":"株式の意義・株主の権利・種類株式・株主平等の原則","q":"公開会社でない会社では，一定の権利に関する事項について，株主ごとに異なる取扱いを行う旨を定款で定めることができるが，これは登記事項である。","ans":false,"exp":"109条2項による取扱いにも，会社法第2編と第5編の規定は適用されるが（同条3項），第7編の適用はない（同条3項），登記事項ではない。","diff":"B"},{"no":772,"topic":"株券","q":"種類株式発行会社は，株式の種類ごとに，株券を発行するか否かについて定款で定めることができる。","ans":false,"exp":"種類株式発行会社が株券を発行する旨を定款に定める場合は，全部の種類株式に係る株券を発行する旨を定める必要がある（214条かっこ書）。株式の種類ごとに異なる定めをすることはできない。","diff":"A"},{"no":773,"topic":"株券","q":"株券発行会社は，公開会社か公開会社でない会社かを問わず，株式を発行した場合でも，株主から請求がある時までは，当該株式に係る株券を発行しないことができる。","ans":true,"exp":"この例外は非公開会社だけ（215条4項）。株券発行会社は，株式を発行した以上遅滞なく，当該株式に係る株券を発行しなければならない（同条1項）。","diff":"A"},{"no":774,"topic":"株券","q":"株券発行会社が株券を発行する場合，当該株券に係る株式の数は，株券の必要的記載事項である。","ans":true,"exp":"当該株券に係る株式の数は，株券の必要的記載事項である（216条2号）。","diff":"A"},{"no":785,"topic":"株券","q":"最高裁判所の判例の趣旨によれば，株券としての効力が生ずるのは，株式会社が法定の形式を具備した文書を作成した時ではなく，当該文書を株主に交付した時である。","ans":true,"exp":"株券は，会社がこれを作成して株主に交付した時に効力を生じる（判例，交付時説）。","diff":"A"},{"no":847,"topic":"自己株式","q":"次に述べる株式会社の行為により株主に対して交付する金銭等（当該株式会社の株式を除く。）の帳簿価額の総額が，当該行為がその効力を生じる日における分配可能額を超えている場合に，当該行為により金銭等の交付を受けた者が，株式会社に対し，交付を受けた金銭等の帳簿価額に相当する額を支払う義務を負うことがある。株式会社が，株主総会の決議によって定められた取得日に，全部取得条項付種類株式の全部を取得する行為。","ans":true,"exp":"全部取得条項付種類株式の取得には，財源規制がある（461条1項4号）。したがって，462条1項の責任が発生する。","diff":"A"},{"no":919,"topic":"株式振替制度","q":"最高裁判所の判例によれば，振替株式の株主が裁判所に対し全部取得条項付種類株式の取得価格決定の申立てをする場合には，その審理が開始されるまでに，個別株主通知がされていることを要する。","ans":false,"exp":"全部取得条項付種類株式の取得価格決定申立（172条1項）は，個別株主通知が必要とされる「少数株主権等」に該当する。そして，振替株式について取得価格決定申立てを受けた会社が，裁判所における審理で申立人が株主であることを争った場合は，「その審理結了までの間に」個別株主通知がなされる必要がある（判例）。審判開始までに個別株主通知がなされる必要はない。","diff":"C"},{"no":1043,"topic":"設立","q":"発起設立の場合において，設立時監査等委員である設立時取締役の解任は，発起人の議決権の3分の2以上に当たる多数をもって決することができる。","ans":true,"exp":"設立時役員等の解任は原則として発起人の議決権の過半数をもって決定するが，設立時監査等委員である設立時取締役の解任には3分の2以上の多数が必要となる（43条1項）。なお，種類株式発行会社の場合は43条3項4項，44条1項2項5項，45条1項2号を参照。","diff":"A"},{"no":1124,"topic":"設立","q":"会社その他の法人は，株式会社の発起人になることができない。","ans":false,"exp":"発起人（→株主）には自然人でも法人でもよい，331条1号（法人は取締役になれない）のような制限はない。","diff":"A"},{"no":1125,"topic":"設立","q":"発起人は，設立しようとする株式会社が公開会社である場合には，3人以上でなければならない。","ans":false,"exp":"発起人の員数規制はない。発設立・募集設立ともに，また，設立しようとする会社が公開会社か非公開会社かを問わず，発起人は1人でよい。なお，設立しようとする会社が取締役会設置会社の場合は，設立時取締役は3人以上必要である（39条1項）。","diff":"A"},{"no":1190,"topic":"募集株式","q":"公開会社の募集株式の割当てにより，当該募集株式の引受人となった者が当該公開会社の総株主の議決権の2分の1を超える数の議決権を有することになる場合において，当該会社の総株主の議決権の10分の1以上の議決権を有する株主が当該公開会社に反対の通知をしたときは，株主総会の特別決議によって当該引受人に対する割当て・総数引受契約の承認を受けなければならない。なお，定款に別段の定めはないものとする。","ans":false,"exp":"「特別決議」が誤り。株主総会の普通決議（341条の普通決議ではなく，通常の普通決議）によって，特定引受人に対する割当て等の承認を受けなければならない（206条の2第4項5項）。なお，341条の普通決議は，（定款で定足数を増減できるが）定款による定足数の引き下げは3分の1までに制限されており，また，決議要件は引き上げしか認められない。","diff":"B"},{"no":1273,"topic":"新株予約権","q":"新株予約権を目的とする質権は，株式会社が当該新株予約権を取得することによって当該新株予約権の新株予約権者が受けることのできる金銭等について存在する。","ans":true,"exp":"272条1項1号。質権の物上代位的効力（質権の目的物が代替物などに評価されるものにもその効力を及ぼすことができる）である。","diff":"C"},{"no":1342,"topic":"社債","q":"社債管理者は，その管理の委託を受けた社債につき，社債管理者としての権限を行使するために必要があるときは，裁判所の許可を得て，社債発行会社の業務及び財産の状況を調査することができる。","ans":true,"exp":"705条4項。","diff":"B"},{"no":1585,"topic":"持分会社","q":"持分会社は，社員の損益分配の割合を，各社員の出資の価額と無関係に定款で定めることができる。","ans":true,"exp":"持分会社では，損益分配の割合について「定款の定めがないとき」は，その割合は各社員の出資の価額に応じて定める（622条1項）。株式会社と違い，社員相互間の内部関係に関して広い定款自治が認められ，出資比率に応じない定款の定めが可能である。","diff":"A"},{"no":1654,"topic":"組織再編","q":"株式会社の吸収合併に関し，存続会社は，消滅会社及び当該存続会社が保有する当該消滅会社の株式については，合併対価を割り当てることはできない。","ans":true,"exp":"合併対価が交付される消滅会社の「株主」から消滅会社及び存続会社は除かれている（749条1項3号かっこ書参照）。したがって，消滅会社が有する自己株式や存続会社が有する消滅会社の株式には合併対価の割当てはできない。","diff":"C"},{"no":1658,"topic":"組織再編","q":"吸収合併存続株式会社は，吸収合併の登記により，吸収合併消滅株式会社の権利義務を承継する。","ans":false,"exp":"吸収型組織再編である吸収合併は，契約で定めた効力発生日に効力を生ずる（750条1項）。","diff":"A"},{"no":1660,"topic":"組織再編","q":"吸収分割は，法定の全ての手続が終了している場合には，吸収分割契約に記載された効力発生日にその効力を生ずる。","ans":true,"exp":"759条1項8項，761条1項8項。","diff":"A"},{"no":1661,"topic":"組織再編","q":"株式会社の組織再編行為において，株式交換は，株式交換の登記によって，その効力を生ずる。","ans":false,"exp":"吸収型組織再編である株式交換は，株式交換契約で定めた効力発生日に効力が発生する（769条1項）。","diff":"A"},{"no":1662,"topic":"組織再編","q":"新設合併は，法定の全ての手続が終了している場合には，新設合併契約に記載された効力発生日にその効力を生ずる。","ans":false,"exp":"新設型組織再編である新設合併は，新設合併設立会社の成立の日（設立登記の日）に効力が発生する（754条1項）。","diff":"A"}];
+let quizQueue=[],quizIdx=0,quizScore=0,quizWrong=[];
+
+function initQuiz(){
+  const topics=[...new Set(QUIZ_DATA.map(function(q){return q.topic;}))];
+  const sel=document.getElementById('quiz-topic-sel');
+  if(!sel)return;
+  sel.innerHTML='<option value="">全トピック</option>';
+  topics.forEach(function(t){const o=document.createElement('option');o.value=t;o.textContent=t;sel.appendChild(o);});
+  quizFilterChange();
+}
+
+/* ── Quiz Import / Export ── */
+let _quizExtra = (function(){
+  try{ return JSON.parse(localStorage.getItem('quizExtra')||'[]'); }catch(e){ return []; }
+})();
+
+function _getAllQuiz(){
+  // Merge QUIZ_DATA (built-in) + _quizExtra (user-imported), deduplicate by no
+  const map={};
+  QUIZ_DATA.forEach(function(q){map[q.no]=q;});
+  _quizExtra.forEach(function(q){map[q.no]=q;});
+  return Object.values(map).sort(function(a,b){return a.no-b.no;});
+}
+
+function _saveExtra(){
+  try{localStorage.setItem('quizExtra',JSON.stringify(_quizExtra));}catch(e){}
+}
+
+function openQuizImport(){
+  document.getElementById('quiz-import-sheet').style.display='';
+  document.getElementById('quiz-import-input').value='';
+  const stat=document.getElementById('quiz-import-status');
+  const all=_getAllQuiz();
+  stat.style.color='var(--lbl3)';
+  stat.textContent='現在 '+all.length+'問収録（うち追加 '+_quizExtra.length+'問）';
+}
+
+function closeQuizImport(){
+  document.getElementById('quiz-import-sheet').style.display='none';
+}
+
+function execQuizImport(){
+  const raw=document.getElementById('quiz-import-input').value.trim();
+  const stat=document.getElementById('quiz-import-status');
+  if(!raw){stat.style.color='var(--red)';stat.textContent='JSONを貼り付けてください';return;}
+  let data;
+  try{data=JSON.parse(raw);}
+  catch(e){stat.style.color='var(--red)';stat.textContent='JSONの形式が正しくありません: '+e.message;return;}
+  if(!Array.isArray(data)){stat.style.color='var(--red)';stat.textContent='配列形式で入力してください';return;}
+  // Validate each item
+  const valid=[],invalid=[];
+  data.forEach(function(q){
+    if(q.no&&q.q&&q.topic&&typeof q.ans==='boolean'&&q.exp&&q.diff) valid.push(q);
+    else invalid.push(q.no||'?');
+  });
+  if(!valid.length){stat.style.color='var(--red)';stat.textContent='有効な問題がありません';return;}
+  // Merge into _quizExtra
+  const extraMap={};
+  _quizExtra.forEach(function(q){extraMap[q.no]=q;});
+  valid.forEach(function(q){extraMap[q.no]=q;});
+  _quizExtra=Object.values(extraMap);
+  _saveExtra();
+  // Refresh topic selector
+  const all=_getAllQuiz();
+  const topics=[...new Set(all.map(function(q){return q.topic;}))];
+  const sel=document.getElementById('quiz-topic-sel');
+  const cur=sel.value;
+  sel.innerHTML='<option value="">全トピック</option>';
+  topics.forEach(function(t){const o=document.createElement('option');o.value=t;o.textContent=t;sel.appendChild(o);});
+  if(cur) sel.value=cur;
+  quizFilterChange();
+  stat.style.color='var(--green)';
+  stat.textContent='✓ '+valid.length+'問をインポートしました（合計'+all.length+'問）'+(invalid.length?' / スキップ'+invalid.length+'件':'');
+  document.getElementById('quiz-import-input').value='';
+}
+
+function clearAllQuiz(){
+  if(!confirm('追加した問題をすべて削除しますか？\n（デフォルトの問題は残ります）')) return;
+  _quizExtra=[];
+  _saveExtra();
+  initQuiz();
+  closeQuizImport();
+  toast('追加問題を削除しました');
+}
+
+function exportQuizJSON(){
+  const all=_getAllQuiz();
+  const json=JSON.stringify(all,null,2);
+  const blob=new Blob([json],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='quiz_questions.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast('エクスポートしました（'+all.length+'問）');
+}
+
+function quizFilterChange(){
+  const topic=document.getElementById('quiz-topic-sel').value;
+  const diff=document.getElementById('quiz-diff-sel').value;
+  const n=_getAllQuiz().filter(function(q){return(topic?q.topic===topic:true)&&(diff?q.diff===diff:true);}).length;
+  const lbl=document.getElementById('quiz-count-lbl');
+  if(lbl)lbl.textContent=n+'問 収録';
+  const area=document.getElementById('quiz-area');
+  if(area)area.innerHTML='';
+  const res=document.getElementById('quiz-result');
+  if(res)res.style.display='none';
+}
+
+function startQuiz(){
+  const topic=document.getElementById('quiz-topic-sel').value;
+  const diff=document.getElementById('quiz-diff-sel').value;
+  let pool=_getAllQuiz().filter(function(q){return(topic?q.topic===topic:true)&&(diff?q.diff===diff:true);});
+  if(!pool.length){toast('該当する問題がありません');return;}
+  for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));const t=pool[i];pool[i]=pool[j];pool[j]=t;}
+  quizQueue=[...pool];quizIdx=0;quizScore=0;quizWrong=[];
+  renderQuizCard();
+}
+
+function renderQuizCard(){
+  const area=document.getElementById('quiz-area');
+  const res=document.getElementById('quiz-result');
+  if(res)res.style.display='none';
+  if(quizIdx>=quizQueue.length){showQuizResult();return;}
+  const q=quizQueue[quizIdx];
+  const prog=(quizIdx+1)+'/'+quizQueue.length;
+  const diffColor=q.diff==='A'?'var(--green)':q.diff==='B'?'var(--orange)':'var(--red)';
+  const diffBg=q.diff==='A'?'var(--green-bg)':q.diff==='B'?'var(--orange-bg)':'var(--red-bg)';
+  let html='<div style="background:var(--sys-bg2);border-radius:12px;padding:18px;margin-bottom:10px">';
+  html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">';
+  html+='<span style="font-size:11px;color:var(--lbl3)">No.'+q.no+' '+esc(q.topic)+'</span>';
+  html+='<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:5px;background:'+diffBg+';color:'+diffColor+'">'+q.diff+'</span>';
+  html+='</div>';
+  html+='<div style="font-size:15px;font-weight:500;color:var(--lbl);line-height:1.75;margin-bottom:18px">'+esc(q.q)+'</div>';
+  html+='<div style="display:flex;gap:10px">';
+  html+='<button onclick="answerQuiz(true)" style="flex:1;padding:16px;background:var(--blue-bg);color:var(--blue);border:2px solid var(--blue);border-radius:10px;font-size:26px;font-weight:700;cursor:pointer;font-family:sans-serif">○</button>';
+  html+='<button onclick="answerQuiz(false)" style="flex:1;padding:16px;background:var(--red-bg);color:var(--red);border:2px solid var(--red);border-radius:10px;font-size:26px;font-weight:700;cursor:pointer;font-family:sans-serif">×</button>';
+  html+='</div></div>';
+  html+='<div style="text-align:center;font-size:12px;color:var(--lbl4)">'+prog+' | 正解 '+quizScore+'問</div>';
+  area.innerHTML=html;
+}
+
+function answerQuiz(userAns){
+  const q=quizQueue[quizIdx];
+  const correct=(q.ans===userAns);
+  if(correct)quizScore++;else quizWrong.push(q);
+  const area=document.getElementById('quiz-area');
+  const cc=correct?'var(--green)':'var(--red)';
+  const cb=correct?'var(--green-bg)':'var(--red-bg)';
+  let html='<div style="background:var(--sys-bg2);border-radius:12px;padding:18px;margin-bottom:10px">';
+  html+='<div style="display:flex;justify-content:space-between;margin-bottom:10px">';
+  html+='<span style="font-size:11px;color:var(--lbl3)">No.'+q.no+'</span>';
+  html+='<span style="font-size:14px;font-weight:700;color:'+cc+'">'+(correct?'✓ 正解！':'✗ 不正解')+'</span>';
+  html+='</div>';
+  html+='<div style="font-size:13px;color:var(--lbl);line-height:1.7;margin-bottom:10px">'+esc(q.q)+'</div>';
+  html+='<div style="background:'+cb+';border-radius:8px;padding:10px 12px;margin-bottom:14px">';
+  html+='<div style="font-size:12px;font-weight:700;color:'+cc+';margin-bottom:5px">正解: '+(q.ans?'○（正しい）':'×（誤り）')+'</div>';
+  html+='<div style="font-size:12px;color:var(--lbl);line-height:1.65">'+esc(q.exp)+'</div>';
+  html+='</div>';
+  html+='<button onclick="nextQuiz()" style="width:100%;padding:13px;background:var(--blue);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:sans-serif">';
+  html+=(quizIdx+1<quizQueue.length?'次の問題 →':'結果を見る')+'</button>';
+  html+='</div>';
+  area.innerHTML=html;
+}
+
+function nextQuiz(){quizIdx++;renderQuizCard();}
+
+function showQuizResult(){
+  const area=document.getElementById('quiz-area');
+  if(area)area.innerHTML='';
+  const total=quizQueue.length;
+  const pct=Math.round(quizScore/total*100);
+  const res=document.getElementById('quiz-result');
+  if(!res)return;
+  res.style.display='';
+  let html='<div style="background:var(--sys-bg2);border-radius:12px;padding:20px;text-align:center;margin-bottom:12px">';
+  html+='<div style="font-size:44px;margin-bottom:8px">'+(pct>=80?'🎉':pct>=60?'👍':'📚')+'</div>';
+  const rc=pct>=80?'var(--green)':pct>=60?'var(--orange)':'var(--red)';
+  html+='<div style="font-family:DM Mono,monospace;font-size:40px;font-weight:400;color:'+rc+'">'+pct+'<span style="font-size:16px">%</span></div>';
+  html+='<div style="font-size:14px;color:var(--lbl3);margin-top:6px">'+quizScore+' / '+total+' 問正解</div></div>';
+  if(quizWrong.length){
+    html+='<div style="font-size:12px;font-weight:700;color:var(--lbl3);margin-bottom:8px">❌ 間違えた問題（'+quizWrong.length+'問）</div>';
+    quizWrong.forEach(function(q){
+      html+='<div style="background:var(--sys-bg2);border-radius:10px;padding:12px;margin-bottom:8px;border-left:3px solid var(--red)">';
+      html+='<div style="font-size:11px;color:var(--lbl3);margin-bottom:4px">No.'+q.no+' '+esc(q.topic)+'</div>';
+      html+='<div style="font-size:13px;color:var(--lbl);line-height:1.5;margin-bottom:6px">'+esc(q.q)+'</div>';
+      html+='<div style="font-size:11px;color:var(--lbl2);line-height:1.5">正解: '+(q.ans?'○':'×')+'　'+esc(q.exp)+'</div></div>';
+    });
+  }
+  html+='<button onclick="startQuiz()" style="width:100%;padding:13px;background:var(--blue);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:sans-serif;margin-top:4px">もう一度</button>';
+  res.innerHTML=html;
+}
+
+initQuiz();
 init();
 initPWA();
 </script>
