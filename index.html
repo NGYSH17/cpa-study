@@ -1294,7 +1294,7 @@ input, textarea { -webkit-user-select: text; user-select: text; }
   <div id="quiz-subj-bar" style="display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch;gap:6px;padding:10px 12px 8px;border-bottom:.5px solid var(--sys-sep2);scrollbar-width:none"></div>
 
   <!-- フィルタ行 -->
-  <div style="padding:8px 12px 6px;display:flex;gap:6px;align-items:center">
+  <div style="padding:8px 12px 4px;display:flex;gap:6px;align-items:center">
     <select id="quiz-topic-sel" onchange="quizFilterChange()" style="flex:1;min-width:0;background:var(--sys-bg2);color:var(--lbl);border:1px solid var(--sys-bg4);border-radius:8px;padding:7px 10px;font-size:13px;font-family:sans-serif"></select>
     <select id="quiz-diff-sel" onchange="quizFilterChange()" style="background:var(--sys-bg2);color:var(--lbl);border:1px solid var(--sys-bg4);border-radius:8px;padding:7px 10px;font-size:13px;font-family:sans-serif">
       <option value="">全難易度</option>
@@ -1302,8 +1302,14 @@ input, textarea { -webkit-user-select: text; user-select: text; }
       <option value="B">B 標準</option>
       <option value="C">C 難問</option>
     </select>
-    <button onclick="startQuiz()" style="background:var(--blue);color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:sans-serif">▶ 開始</button>
     <button onclick="openQuizImport()" style="background:var(--sys-bg2);color:var(--lbl2);border:1px solid var(--sys-bg4);border-radius:8px;padding:8px 12px;font-size:13px;cursor:pointer;font-family:sans-serif" title="問題をインポート">＋</button>
+  </div>
+  <div style="padding:4px 12px 8px;display:flex;gap:6px;align-items:center">
+    <select id="quiz-order-sel" style="background:var(--sys-bg2);color:var(--lbl);border:1px solid var(--sys-bg4);border-radius:8px;padding:7px 10px;font-size:13px;font-family:sans-serif">
+      <option value="random">🔀 ランダム</option>
+      <option value="order">🔢 番号順</option>
+    </select>
+    <button onclick="startQuiz()" style="flex:1;background:var(--blue);color:#fff;border:none;border-radius:8px;padding:9px 14px;font-size:14px;font-weight:700;cursor:pointer;font-family:sans-serif">▶ 開始</button>
   </div>
   <div style="padding:0 12px 6px;font-size:11px;color:var(--lbl3)" id="quiz-count-lbl"></div>
   <div id="quiz-area" style="padding:0 12px"></div>
@@ -3691,9 +3697,15 @@ function quizFilterChange(){
 function startQuiz(){
   const topic=document.getElementById('quiz-topic-sel').value;
   const diff=document.getElementById('quiz-diff-sel').value;
+  const orderSel=document.getElementById('quiz-order-sel');
+  const isRandom=!orderSel||orderSel.value==='random';
   let pool=_getAllQuiz().filter(function(q){return(topic?q.topic===topic:true)&&(diff?q.diff===diff:true);});
   if(!pool.length){toast('該当する問題がありません');return;}
-  for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));const t=pool[i];pool[i]=pool[j];pool[j]=t;}
+  if(isRandom){
+    for(var i=pool.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=pool[i];pool[i]=pool[j];pool[j]=t;}
+  } else {
+    pool.sort(function(a,b){return a.no-b.no;});
+  }
   quizQueue=[...pool];quizIdx=0;quizScore=0;quizWrong=[];
   _quizStartTime=Date.now();_quizQTimes=[];
   _startQuizTimer();
@@ -3732,7 +3744,9 @@ function renderQuizCard(){
   html+='<div style="display:flex;gap:10px">';
   html+='<button onclick="answerQuiz(true)" style="flex:1;padding:16px;background:var(--blue-bg);color:var(--blue);border:2px solid var(--blue);border-radius:10px;font-size:26px;font-weight:700;cursor:pointer;font-family:sans-serif">○</button>';
   html+='<button onclick="answerQuiz(false)" style="flex:1;padding:16px;background:var(--red-bg);color:var(--red);border:2px solid var(--red);border-radius:10px;font-size:26px;font-weight:700;cursor:pointer;font-family:sans-serif">×</button>';
-  html+='</div></div>';
+  html+='</div>';
+  html+='<button onclick="finishQuizEarly()" style="width:100%;margin-top:10px;padding:9px;background:var(--sys-bg3);color:var(--lbl3);border:none;border-radius:8px;font-size:12px;cursor:pointer;font-family:sans-serif">⏹ ここで終了して記録する</button>';
+  html+='</div>';
   html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding:4px 0">';
   html+='<span style="font-size:12px;color:var(--lbl4)">'+prog+' | 正解 '+quizScore+'問</span>';
   html+='<span id="quiz-elapsed" style="font-size:12px;font-family:DM Mono,monospace;color:var(--lbl3);background:var(--sys-bg3);padding:2px 8px;border-radius:6px">00:00</span>';
@@ -3770,6 +3784,11 @@ function answerQuiz(userAns){
 
 function nextQuiz(){quizIdx++;renderQuizCard();}
 
+function finishQuizEarly(){
+  if(!quizQueue.length)return;
+  showQuizResult();
+}
+
 function showQuizResult(){
   if(_quizTimerIv){clearInterval(_quizTimerIv);_quizTimerIv=null;}
   if(!anyTimerRunning())releaseWakeLock();
@@ -3787,7 +3806,7 @@ function showQuizResult(){
   const mins=Math.max(1,Math.round(totalSec/60));
   const subj=_getSubjects().find(function(s){return s.id===_quizSubjId;});
   const subjName=subj?subj.name:'短答';
-  addSess({subjId:'kigyoho',unitId:'',date:ds(new Date()),minutes:mins,io:'output',memo:subjName+' 短答演習 '+total+'問（正答率'+pct+'%・平均'+avgSec+'秒/問）',probCount:total});
+  addSess({subjId:_quizSubjId||'kigyoho',unitId:'',date:ds(new Date()),minutes:mins,io:'output',memo:subjName+' 短答演習 '+quizIdx+'問（正答率'+pct+'%・平均'+avgSec+'秒/問）',probCount:quizIdx});
   let html='<div style="background:var(--sys-bg2);border-radius:12px;padding:20px;text-align:center;margin-bottom:12px">';
   html+='<div style="font-size:44px;margin-bottom:8px">'+(pct>=80?'🎉':pct>=60?'👍':'📚')+'</div>';
   const rc=pct>=80?'var(--green)':pct>=60?'var(--orange)':'var(--red)';
