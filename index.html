@@ -2571,13 +2571,67 @@ updateTodayHeaderBar();
   renderSchedProgress();
 }
 
+// 科目ID変換: getSUBJS()のID('kaisha'等) → 短答画面の_quizSubjId('kigyoho'等)
+const SUBJ_TO_QUIZ_ID={kaisha:'kigyoho',zaimu:'zaimu',kanri:'kanri',kansa:'kansa'};
+
+// 復習リストの項目をタップ → カード学習 or 短答クイズへ直接遷移して開始
+function goReviewItem(type,id,subjId,nm){
+  if(type==='fc'){
+    // 暗記カードタブへ遷移し、該当科目を展開して「学習」ボタンをすぐ押せる状態にする
+    goPageByName('fc');
+    setTimeout(function(){
+      if(typeof renderFC==='function')renderFC();
+      fcOpenSubj=subjId;
+      fcOpenUnit=null;
+      renderFCTree();
+      // 科目カードまでスクロール
+      setTimeout(function(){
+        var wrap=document.getElementById('fc-deck-list');
+        if(wrap){
+          var card=wrap.querySelector('[data-subj="'+subjId+'"]')||wrap.children[1];
+          if(card&&card.scrollIntoView)card.scrollIntoView({block:'start'});
+        }
+      },50);
+    },50);
+    return;
+  }
+  // unit / ex: 短答クイズへ遷移し、トピックを選択した「すぐスタート可能」な状態にする
+  const quizSubjId=SUBJ_TO_QUIZ_ID[subjId]||subjId;
+  goPageByName('quiz');
+  setTimeout(function(){
+    selectQuizSubj(quizSubjId);
+    setTimeout(function(){
+      // 単元名と一致するトピックがあればそれを選択（スタートは手動）
+      const allQ=_getAllQuiz();
+      const topics=allQ.map(function(q){return q.topic;});
+      let matched=null;
+      if(nm){
+        // 完全一致 → 部分一致の順で探す
+        matched=topics.find(function(t){return t===nm;});
+        if(!matched)matched=topics.find(function(t){return nm.indexOf(t)>=0||t.indexOf(nm)>=0;});
+      }
+      _quizTopicFilters=[];
+      if(matched){
+        selectTopic(matched);
+        closeTopicSheet();
+        toast('▶ スタートでクイズを開始できます');
+      } else {
+        // 一致するトピックがなければトピック選択シートを開く
+        openTopicSheet();
+        toast('トピックを選択してスタートしてください');
+      }
+    },60);
+  },50);
+}
+
 function rvItemHTML(x){
   const stageCls=SC[x.stage]||'sp0';const stageColor=SCOL[x.stage]||'var(--s0)';
   const today=ds(new Date());const isOD=x.nextDate&&x.nextDate<today;
+  const nmEsc=esc(x.nm||'').replace(/'/g,"\\'");
   return `<div class="rv-pill" id="rvc-${x.id}">
     <div class="rv-pill-bar" style="background:${stageColor}"></div>
-    <div class="rv-pill-body">
-      <div class="rv-pill-name">${x.type==='fc'?'🃏 ':''}${x.nm}</div>
+    <div class="rv-pill-body rv-pill-jump" onclick="goReviewItem('${x.type}','${x.id}','${x.subjId||''}','${nmEsc}')" style="cursor:pointer">
+      <div class="rv-pill-name">${x.type==='fc'?'🃏 ':''}${x.nm} <span style="font-size:10px;color:var(--blue)">▶</span></div>
       <div class="rv-pill-sub">${x.sub2?x.sub2.name:'—'}</div>
       <div class="rv-pill-meta">
         <span class="stage-pill ${stageCls}">${STAGE_NAMES[x.stage]}</span>
@@ -2902,10 +2956,13 @@ function _exDueItemHTML(x){
       +(filled?'background:#30D158;color:#fff;':'background:transparent;color:var(--lbl4);border:1.5px solid var(--sep);')
       +'font-size:8px;font-weight:700;line-height:1">'+(filled?'◯':'')+'</span>';
   }
+  // 小区分名（' › '以降）は除き、親単元名でトピックマッチングする
+  var topicNm=(x.name||'').split(' › ')[0];
+  var nmEsc=topicNm.replace(/'/g,"\\'");
   return '<div class="rv-pill" data-uid="'+x.unitId+'"'+(x.subUnitId?' data-suid="'+x.subUnitId+'"':'')+'>'
     +'<div class="rv-pill-bar" style="background:'+(isOD?'#FF453A':'#FF9F0A')+'"></div>'
-    +'<div class="rv-pill-body">'
-    +'<div class="rv-pill-name">'+x.name+'</div>'
+    +'<div class="rv-pill-body rv-pill-jump" onclick="goReviewItem(\'unit\',\''+x.unitId+'\',\''+(x.subjId||'')+'\',\''+nmEsc+'\')" style="cursor:pointer">'
+    +'<div class="rv-pill-name">'+x.name+' <span style="font-size:10px;color:var(--blue)">▶</span></div>'
     +'<div class="rv-pill-sub">'+(x.sub2?x.sub2.name:'—')+'</div>'
     +'<div class="rv-pill-meta">'
     +'<span style="display:flex;gap:2px">'+streakDots+'</span>'
@@ -3443,7 +3500,7 @@ function renderFCTree(){
     const isOpen=fcOpenSubj===s.id;
 
     // ── 科目カード（Level 1）: 明確なカード感、上下マージン ──
-    html+='<div style="margin:10px 12px 0;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.25)">';
+    html+='<div data-subj="'+s.id+'" style="margin:10px 12px 0;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.25)">';
 
     // 科目ヘッダー
     html+='<div style="display:flex;align-items:center;padding:14px 14px;background:var(--sys-bg2);cursor:pointer" onclick="fcToggleSubj(&apos;'+s.id+'&apos;)">';
@@ -5510,6 +5567,7 @@ function renderQuizCard(){
   html+='<span style="font-size:11px;color:var(--lbl3)">No.'+q.no+' '+esc(q.topic)+'</span>';
   html+='<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:5px;background:'+diffBg+';color:'+diffColor+'">'+q.diff+'</span>';
   html+='<span style="font-size:11px;padding:2px 8px;border-radius:5px;margin-left:4px;background:rgba(0,122,255,.1);color:var(--blue);font-weight:600">'+(q.type==='fill'?'📝 穴埋め':'○× 正誤')+'</span>';
+  html+='<button onclick="skipQuiz()" style="margin-left:auto;padding:3px 10px;border-radius:6px;border:1px solid var(--sep);background:var(--sys-bg3);color:var(--lbl3);font-size:11px;cursor:pointer;font-family:sans-serif">⏭ あとで</button>';
   html+='</div>';
   html+='<div style="font-size:15px;font-weight:500;color:var(--lbl);line-height:1.75;margin-bottom:18px">'+esc(q.q)+'</div>';
   html+='<div style="display:flex;gap:10px">';
@@ -5528,7 +5586,7 @@ function renderQuizCard(){
 
 
 // ── 穴埋め問題（選択肢ボタン式）──
-// _fillState: {blanks, choices, keys, selected:[], curIdx}
+// _fillState: {blanks, choices, keys, selected:[], curIdx, mode}
 var _fillState=null;
 
 function renderFillCard(q){
@@ -5540,8 +5598,24 @@ function renderFillCard(q){
   // シャッフル
   var choices=rawChoices.slice();
   for(var i=choices.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=choices[i];choices[i]=choices[j];choices[j]=t;}
-  _fillState={blanks:blanks,choices:choices,keys:keys,selected:blanks.map(function(){return null;}),curIdx:0,q:q};
+  // モード: choices配列があれば語群選択をデフォルト、なければ筆記。前回選択を記憶。
+  var savedMode=cfg.fillMode;
+  var hasChoices=rawChoices.length>0;
+  var mode=savedMode==='free'||savedMode==='choice'?savedMode:(hasChoices?'choice':'free');
+  if(!hasChoices&&mode==='choice')mode='free'; // 選択肢がない場合は筆記固定
+  _fillState={blanks:blanks,choices:choices,keys:keys,selected:blanks.map(function(){return null;}),curIdx:0,q:q,mode:mode,hasChoices:hasChoices};
   window._fillBlanks=blanks;
+  _renderFillUI();
+}
+
+function _fillSetMode(mode){
+  if(!_fillState)return;
+  if(mode==='choice'&&!_fillState.hasChoices)return; // 選択肢がなければ切替不可
+  _fillState.mode=mode;
+  cfg.fillMode=mode;saveAll();
+  // 入力済みをクリアして最初の空欄からやり直し
+  _fillState.selected=_fillState.blanks.map(function(){return null;});
+  _fillState.curIdx=0;
   _renderFillUI();
 }
 
@@ -5552,64 +5626,90 @@ function _renderFillUI(){
   const prog=(quizIdx+1)+'/'+quizQueue.length;
   const diffBg=q.diff==='A'?'var(--green-bg)':q.diff==='B'?'var(--orange-bg)':'var(--red-bg)';
   const diffColor=q.diff==='A'?'var(--green)':q.diff==='B'?'var(--orange)':'var(--red)';
-  const allFilled=s.selected.every(function(v){return v!==null;});
+  const isChoice=s.mode==='choice';
+  const allFilled=isChoice
+    ?s.selected.every(function(v){return v!==null;})
+    :s.selected.every(function(v){return v!==null&&String(v).trim()!=='';});
 
-  // 問題文：空欄を「選択中ボックス」に置換
+  // 問題文：空欄を「選択中ボックス」または「入力欄」に置換
   let qRaw=q.q;
-  // （　ア　）or（　①　）形式を検出して置換
   s.keys.forEach(function(k,idx){
-    // 様々な空欄マーカーに対応
     var patterns=[
       '（　'+k+'　）',
       '（ '+k+' ）',
       '( '+k+' )',
       '（'+k+'）',
     ];
-    var filled=s.selected[idx];
-    var isActive=s.curIdx===idx;
-    var box=filled
-      ?'<span style="display:inline-block;min-width:72px;padding:3px 10px;border-radius:6px;background:var(--blue);color:#fff;font-weight:700;font-size:13px;margin:2px 2px;text-align:center">'+esc(filled)+'</span>'
-      :'<span style="display:inline-block;min-width:72px;padding:3px 10px;border-radius:6px;border:2px '+(isActive?'solid var(--blue)':'dashed var(--sep)')+';color:'+(isActive?'var(--blue)':'var(--lbl4)')+';font-size:13px;margin:2px 2px;text-align:center">'+(isActive?'▼ '+k:k)+'</span>';
+    var box;
+    if(isChoice){
+      var filled=s.selected[idx];
+      var isActive=s.curIdx===idx;
+      box=filled
+        ?'<span onclick="_fillReselect('+idx+')" style="display:inline-block;min-width:72px;padding:3px 10px;border-radius:6px;background:var(--blue);color:#fff;font-weight:700;font-size:13px;margin:2px 2px;text-align:center;cursor:pointer">'+esc(filled)+' <span style="opacity:.7;font-size:10px">✕</span></span>'
+        :'<span style="display:inline-block;min-width:72px;padding:3px 10px;border-radius:6px;border:2px '+(isActive?'solid var(--blue)':'dashed var(--sep)')+';color:'+(isActive?'var(--blue)':'var(--lbl4)')+';font-size:13px;margin:2px 2px;text-align:center">'+(isActive?'▼ '+k:k)+'</span>';
+    } else {
+      var val=s.selected[idx]||'';
+      box='<input class="fill-input" data-idx="'+idx+'" type="text" value="'+esc(val)+'" placeholder="'+esc(k)+'" '
+        +'style="display:inline-block;width:96px;border:1.5px solid var(--blue);border-radius:6px;'
+        +'padding:4px 8px;font-size:13px;background:var(--sys-bg);color:var(--lbl);'
+        +'text-align:center;vertical-align:middle;margin:2px 2px;font-family:sans-serif">';
+    }
     var replaced=false;
     for(var i=0;i<patterns.length;i++){
       if(qRaw.indexOf(patterns[i])>=0){qRaw=qRaw.replace(patterns[i],box);replaced=true;break;}
-    }
-    if(!replaced){
-      // 問題文にマーカーがなければ別途表示
-      qRaw=qRaw; // そのまま
     }
   });
 
   let html='<div style="background:var(--sys-bg2);border-radius:12px;padding:16px;margin-bottom:10px">';
   html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">';
   html+='<span style="font-size:11px;color:var(--lbl3)">No.'+q.no+' '+esc(q.topic)+'</span>';
+  html+='<div style="display:flex;align-items:center;gap:6px">';
   html+='<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:5px;background:'+diffBg+';color:'+diffColor+'">'+q.diff+'</span>';
+  html+='<button onclick="skipQuiz()" style="padding:3px 10px;border-radius:6px;border:1px solid var(--sep);background:var(--sys-bg3);color:var(--lbl3);font-size:11px;cursor:pointer;font-family:sans-serif">⏭ あとで</button>';
   html+='</div>';
-  html+='<div style="font-size:13px;font-weight:600;color:var(--blue);margin-bottom:8px">📝 穴埋め問題</div>';
-  html+='<div style="font-size:13px;color:var(--lbl);line-height:2.2;margin-bottom:12px">'+qRaw+'</div>';
-
-  // 現在の空欄インジケーター
-  html+='<div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;font-size:12px;color:var(--lbl3)">';
-  html+='空欄 <span style="font-weight:700;color:var(--blue)">'+s.keys[s.curIdx]+'</span> に入る語句を選択：';
   html+='</div>';
 
-  // 選択肢ボタン
-  html+='<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px">';
-  s.choices.forEach(function(c,ci){
-    var isUsed=s.selected.indexOf(c)>=0;
-    html+='<button onclick="_fillSelect('+ci+')" '
-      +'style="padding:8px 14px;border-radius:8px;border:1.5px solid '+(isUsed?'var(--sep)':'var(--blue)')+';'
-      +'background:'+(isUsed?'var(--sys-bg3)':'var(--sys-bg)')+';'
-      +'color:'+(isUsed?'var(--lbl4)':'var(--lbl)')+';'
-      +'font-size:13px;cursor:'+(isUsed?'default':'pointer')+';font-family:sans-serif;'
-      +'text-decoration:'+(isUsed?'line-through':'none')+'"'
-      +(isUsed?' disabled':'')+'>'+esc(c)+'</button>';
-  });
+  // モード切替トグル
+  html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">';
+  html+='<span style="font-size:13px;font-weight:600;color:var(--blue)">📝 穴埋め問題</span>';
+  if(s.hasChoices){
+    html+='<div style="display:flex;gap:4px;background:var(--sys-bg3);border-radius:8px;padding:2px">';
+    html+='<button onclick="_fillSetMode(\'choice\')" style="padding:4px 10px;border-radius:6px;border:none;font-size:11px;font-weight:600;cursor:pointer;font-family:sans-serif;'
+      +(isChoice?'background:var(--blue);color:#fff;':'background:transparent;color:var(--lbl3);')+'">🔘 語群選択</button>';
+    html+='<button onclick="_fillSetMode(\'free\')" style="padding:4px 10px;border-radius:6px;border:none;font-size:11px;font-weight:600;cursor:pointer;font-family:sans-serif;'
+      +(!isChoice?'background:var(--blue);color:#fff;':'background:transparent;color:var(--lbl3);')+'">✏️ 筆記</button>';
+    html+='</div>';
+  }
   html+='</div>';
 
-  // ナビゲーション（前の空欄をクリアするボタン）
-  if(s.curIdx>0){
-    html+='<button onclick="_fillBack()" style="padding:7px 14px;border-radius:8px;border:1px solid var(--sep);background:var(--sys-bg3);color:var(--lbl3);font-size:12px;cursor:pointer;margin-bottom:8px">← 戻る</button> ';
+  html+='<div style="font-size:13px;color:var(--lbl);line-height:2.4;margin-bottom:12px">'+qRaw+'</div>';
+
+  if(isChoice){
+    // 現在の空欄インジケーター
+    html+='<div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;font-size:12px;color:var(--lbl3)">';
+    html+='空欄 <span style="font-weight:700;color:var(--blue)">'+s.keys[s.curIdx]+'</span> に入る語句を選択：';
+    html+='</div>';
+
+    // 選択肢ボタン
+    html+='<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px">';
+    s.choices.forEach(function(c,ci){
+      var isUsed=s.selected.indexOf(c)>=0;
+      html+='<button onclick="_fillSelect('+ci+')" '
+        +'style="padding:8px 14px;border-radius:8px;border:1.5px solid '+(isUsed?'var(--sep)':'var(--blue)')+';'
+        +'background:'+(isUsed?'var(--sys-bg3)':'var(--sys-bg)')+';'
+        +'color:'+(isUsed?'var(--lbl4)':'var(--lbl)')+';'
+        +'font-size:13px;cursor:'+(isUsed?'default':'pointer')+';font-family:sans-serif;'
+        +'text-decoration:'+(isUsed?'line-through':'none')+'"'
+        +(isUsed?' disabled':'')+'>'+esc(c)+'</button>';
+    });
+    html+='</div>';
+
+    // ナビゲーション（前の空欄をクリアするボタン）
+    if(s.curIdx>0){
+      html+='<button onclick="_fillBack()" style="padding:7px 14px;border-radius:8px;border:1px solid var(--sep);background:var(--sys-bg3);color:var(--lbl3);font-size:12px;cursor:pointer;margin-bottom:8px">← 戻る</button> ';
+    }
+  } else {
+    html+='<div style="font-size:11px;color:var(--lbl4);margin-bottom:10px">各空欄に語句を入力してください</div>';
   }
 
   // 全部埋まったら答え合わせボタン
@@ -5622,6 +5722,34 @@ function _renderFillUI(){
 
   area.innerHTML=html;
   _quizQStartTime=_quizQStartTime||Date.now();
+  _initQuizSwipe(false,true);
+
+  if(!isChoice){
+    // 筆記モード：入力イベントとEnterキー対応
+    area.querySelectorAll('.fill-input').forEach(function(el){
+      el.addEventListener('input',function(){
+        var idx=parseInt(el.getAttribute('data-idx'),10);
+        _fillState.selected[idx]=el.value;
+        // ボタンの有効/無効のみ更新（再描画でキャレットが飛ぶのを防ぐ）
+        var allF=_fillState.selected.every(function(v){return v!==null&&String(v).trim()!=='';});
+        var btn=document.getElementById('fill-check-btn');
+        if(allF&&!btn){_renderFillUI();}
+        else if(!allF&&btn){_renderFillUI();}
+      });
+      el.addEventListener('keydown',function(e){
+        if(e.key==='Enter'){
+          var allF=_fillState.selected.every(function(v){return v!==null&&String(v).trim()!=='';});
+          if(allF)checkFill(_fillState.blanks);
+        }
+      });
+    });
+    // フォーカスを最初の空欄へ
+    var firstInput=area.querySelector('.fill-input');
+    if(firstInput&&document.activeElement!==firstInput){
+      // 既存の値があれば末尾にフォーカス
+    }
+  }
+
   if(allFilled){
     const btn=document.getElementById('fill-check-btn');
     if(btn)btn.onclick=function(){checkFill(_fillState.blanks);};
@@ -5649,6 +5777,14 @@ function _fillBack(){
   _renderFillUI();
 }
 
+// 既に埋めた空欄をタップして選び直す
+function _fillReselect(idx){
+  if(!_fillState)return;
+  _fillState.selected[idx]=null;
+  _fillState.curIdx=idx;
+  _renderFillUI();
+}
+
 function circled(n){
   var chars=['①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩','⑪','⑫'];
   return chars[n-1]||String(n);
@@ -5657,14 +5793,23 @@ function circled(n){
 function checkFill(blanks){
   const q=quizQueue[quizIdx];
   const qSec=Math.round((Date.now()-_quizQStartTime)/1000);
-  // 選択肢ボタン式: _fillState.selectedから取得
+  // _fillState.selectedから取得（語群選択 or 筆記）
   const selected=_fillState?_fillState.selected:blanks.map(function(){return '';});
   const keys=_fillState?_fillState.keys:blanks.map(function(_,i){return String(i+1);});
+  const isFree=_fillState&&_fillState.mode==='free';
   let allCorrect=true;
   let score=0;
   const results=blanks.map(function(ans,idx){
-    var userVal=selected[idx]||'';
-    var correct=(userVal===ans);
+    var userVal=(selected[idx]||'').toString().trim();
+    var correct;
+    if(isFree){
+      // 筆記モード: 完全一致、または空白・記号を除去した正規化一致、または相互包含（2文字以上）
+      var norm=function(s){return s.replace(/[\s　・,，。.\(\)（）「」『』]/g,'');};
+      var nu=norm(userVal),na=norm(ans);
+      correct=(userVal===ans)||(nu===na)||(nu.length>=2&&na.indexOf(nu)>=0)||(na.length>=2&&nu.indexOf(na)>=0);
+    } else {
+      correct=(userVal===ans);
+    }
     if(correct)score++;else allCorrect=false;
     return{num:idx+1,key:keys[idx]||String(idx+1),ans:ans,user:userVal,correct:correct};
   });
@@ -5700,11 +5845,11 @@ function checkFill(blanks){
   _initQuizSwipe(true);
 }
 
-function _initQuizSwipe(isExplain){
+function _initQuizSwipe(isExplain,isFill){
   var card=document.querySelector('#quiz-area>div');
   if(!card||card._swipeInit)return;
   card._swipeInit=true;
-  var sx=0,sy=0,sTime=0;
+  var sx=0,sy=0,sTime=0,startEl=null,dragging=false;
   var hint=document.createElement('div');
   hint.style.cssText='position:absolute;top:12px;left:12px;right:12px;font-size:28px;font-weight:900;text-align:center;opacity:0;pointer-events:none;transition:opacity .1s;z-index:10;';
   card.style.position='relative';
@@ -5712,36 +5857,50 @@ function _initQuizSwipe(isExplain){
 
   card.addEventListener('touchstart',function(e){
     sx=e.touches[0].clientX;sy=e.touches[0].clientY;sTime=Date.now();
+    startEl=e.target;
+    // 入力欄・ボタン・選択肢からのドラッグはスワイプ無効（タップ操作を優先）
+    dragging=!(startEl&&startEl.closest&&startEl.closest('input,button,textarea,select'));
   },{passive:true});
 
   card.addEventListener('touchmove',function(e){
+    if(!dragging)return;
     var dx=e.touches[0].clientX-sx;
     var dy=e.touches[0].clientY-sy;
-    if(Math.abs(dx)<Math.abs(dy))return;
+    var absX=Math.abs(dx),absY=Math.abs(dy);
+    if(absX<10&&absY<10)return;
+
+    // 縦方向の動きは通常のスクロールに譲る（preventDefaultしない）
+    if(absX<=absY)return;
+
     e.preventDefault();
     card.style.transition='none';
     card.style.transform='translateX('+dx+'px) rotate('+(dx*0.025)+'deg)';
     card.style.opacity=String(Math.max(0.4,1-Math.abs(dx)/280));
-    if(!isExplain){
+    if(!isExplain&&!isFill){
       if(dx>30){hint.textContent='○';hint.style.color='var(--blue)';hint.style.opacity='0.8';}
       else if(dx<-30){hint.textContent='×';hint.style.color='var(--red)';hint.style.opacity='0.8';}
       else{hint.style.opacity='0';}
-    } else {
+    } else if(isExplain){
       if(dx>30){hint.textContent='次へ →';hint.style.color='var(--lbl2)';hint.style.opacity='0.7';}
       else{hint.style.opacity='0';}
+    } else {
+      hint.style.opacity='0';
     }
   },{passive:false});
 
   card.addEventListener('touchend',function(e){
+    if(!dragging)return;
     var dx=e.changedTouches[0].clientX-sx;
     var dy=e.changedTouches[0].clientY-sy;
     var dt=Date.now()-sTime;
-    if(Math.abs(dx)<Math.abs(dy)||dt>450||Math.abs(dx)<45){
+    var absX=Math.abs(dx),absY=Math.abs(dy);
+
+    if(absX<=absY||dt>450||absX<45){
       card.style.transition='transform .22s,opacity .22s';
       card.style.transform='';card.style.opacity='';hint.style.opacity='0';
       return;
     }
-    if(!isExplain){
+    if(!isExplain&&!isFill){
       if(dx>45){
         // 右スワイプ → ○
         card.style.transition='transform .2s,opacity .2s';
@@ -5753,6 +5912,10 @@ function _initQuizSwipe(isExplain){
         card.style.transform='translateX(-130%) rotate(-10deg)';card.style.opacity='0';
         setTimeout(function(){answerQuiz(false);},190);
       }
+    } else if(!isExplain&&isFill){
+      // 穴埋め問題: 左右スワイプは無効（リバウンドのみ）
+      card.style.transition='transform .22s,opacity .22s';
+      card.style.transform='';card.style.opacity='';hint.style.opacity='0';
     } else {
       if(dx>45){
         // 右スワイプ → 次へ
@@ -5765,6 +5928,17 @@ function _initQuizSwipe(isExplain){
       }
     }
   },{passive:true});
+}
+
+// 現在の問題を後回しにして次へ（◯/×・穴埋めいずれも未回答のまま末尾へ移動）
+function skipQuiz(){
+  if(quizQueue.length<=1){toast('これ以上スキップできません');renderQuizCard();return;}
+  var q=quizQueue.splice(quizIdx,1)[0];
+  quizQueue.push(q);
+  _fillState=null;
+  toast('⏭ 後回しにしました');
+  if(quizIdx>=quizQueue.length)quizIdx=quizQueue.length-1;
+  renderQuizCard();
 }
 
 function answerQuiz(userAns){
