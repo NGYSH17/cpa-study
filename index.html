@@ -1303,7 +1303,10 @@ input, textarea { -webkit-user-select: text; user-select: text; }
 <div class="pg" id="pg-units">
   <div class="sec-label" style="display:flex;justify-content:space-between;align-items:center">
     <span>科目別 単元管理</span>
-    <button onclick="openSubjSheet(null)" style="background:transparent;border:none;color:var(--blue);font-size:12px;cursor:pointer;padding:0 0 0 8px">＋ 科目を追加</button>
+    <div style="display:flex;gap:6px">
+      <button onclick="openSubjOrderSheet()" style="background:transparent;border:none;color:var(--lbl3);font-size:12px;cursor:pointer;padding:0">⚙️ 科目管理</button>
+      <button onclick="openSubjSheet(null)" style="background:transparent;border:none;color:var(--blue);font-size:12px;cursor:pointer;padding:0 0 0 8px">＋ 科目を追加</button>
+    </div>
   </div>
   <div style="padding:0 12px 8px;display:flex;gap:6px">
     <button id="ut-tanto" onclick="setUnitType('tanto')" style="flex:1;padding:8px;border:none;border-radius:8px;font-size:13px;font-weight:700;background:var(--blue);color:#fff;cursor:pointer">📝 短答</button>
@@ -1373,6 +1376,25 @@ input, textarea { -webkit-user-select: text; user-select: text; }
   </div>
 </div>
 
+
+
+<!-- SUBJ ORDER SHEET -->
+<div id="subj-order-sheet" style="display:none;position:fixed;inset:0;z-index:9300;background:rgba(0,0,0,.55)" onclick="if(event.target===this)closeSubjOrderSheet()">
+  <div style="position:absolute;bottom:calc(env(safe-area-inset-bottom,0px) + 56px);left:0;right:0;background:var(--sys-bg);border-radius:20px 20px 0 0;max-height:80vh;display:flex;flex-direction:column;overflow:hidden">
+    <div style="padding:14px 16px 10px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--sep);flex-shrink:0">
+      <div>
+        <div style="font-size:15px;font-weight:700;color:var(--lbl)">科目の管理</div>
+        <div style="font-size:11px;color:var(--lbl3);margin-top:2px">並び替え・非表示</div>
+      </div>
+      <button onclick="closeSubjOrderSheet()" style="background:var(--sys-bg3);border:none;border-radius:50%;width:28px;height:28px;font-size:16px;color:var(--lbl2);cursor:pointer">×</button>
+    </div>
+    <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:8px 0" id="subj-order-list"></div>
+    <div style="padding:10px 16px calc(env(safe-area-inset-bottom,0px) + 10px);border-top:1px solid var(--sep);flex-shrink:0;display:flex;gap:8px">
+      <button onclick="resetSubjOrder()" style="flex:1;padding:12px;border-radius:10px;border:1px solid var(--sep);background:var(--sys-bg2);color:var(--lbl3);font-size:13px;cursor:pointer;font-family:sans-serif">デフォルトに戻す</button>
+      <button onclick="closeSubjOrderSheet()" style="flex:2;padding:12px;border-radius:10px;border:none;background:var(--blue);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:sans-serif">完了</button>
+    </div>
+  </div>
+</div>
 
 <!-- SUBJ SHEET -->
 <div id="subj-sheet" style="display:none;position:fixed;inset:0;z-index:9200;background:rgba(0,0,0,.55)" onclick="if(event.target===this)closeSubjSheet()">
@@ -1474,6 +1496,7 @@ input, textarea { -webkit-user-select: text; user-select: text; }
       <button id="qt-tf"   onclick="setQuizType('truefalse')"   style="padding:8px 9px;font-size:12px;border:none;background:transparent;color:var(--lbl);cursor:pointer">○×</button>
       <button id="qt-fill" onclick="setQuizType('fill')"        style="padding:8px 9px;font-size:12px;border:none;background:transparent;color:var(--lbl);cursor:pointer">穴埋め</button>
     </div>
+    <button id="qt-wrong" onclick="toggleWrongFilter()" style="padding:7px 9px;font-size:12px;border:1px solid var(--sep);border-radius:8px;background:var(--sys-bg2);color:var(--lbl3);cursor:pointer;white-space:nowrap;font-family:sans-serif">❌ 弱点</button>
     <select id="quiz-order-sel" style="background:var(--sys-bg2);color:var(--lbl);border:1px solid var(--sys-bg4);border-radius:8px;padding:7px 6px;font-size:12px;font-family:sans-serif">
       <option value="random">🔀 乱順</option>
       <option value="order">🔢 番号順</option>
@@ -1510,7 +1533,13 @@ input, textarea { -webkit-user-select: text; user-select: text; }
     </div>
   </div>
   <div id="quiz-timer-bar" style="display:none;padding:2px 12px 4px;text-align:right"><span id="quiz-elapsed" style="font-size:12px;font-family:'DM Mono',monospace;color:var(--lbl3);background:var(--sys-bg3);padding:2px 8px;border-radius:6px">00:00</span></div>
+  <!-- 弱点タブ切替 -->
+  <div style="display:flex;gap:4px;padding:0 12px 8px">
+    <button id="quiz-mode-normal" onclick="setQuizMode('normal')" style="flex:1;padding:7px;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;background:var(--blue);color:#fff;font-family:sans-serif">📝 クイズ</button>
+    <button id="quiz-mode-wrong" onclick="setQuizMode('wrong')" style="flex:1;padding:7px;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;background:var(--sys-bg2);color:var(--lbl);font-family:sans-serif">❌ 弱点一覧</button>
+  </div>
   <div id="quiz-area" style="padding:0 12px"></div>
+  <div id="quiz-wrong-pane" style="display:none;padding:0 12px 16px"></div>
   <div id="quiz-result" style="display:none;padding:12px"></div>
 </div>
 
@@ -1525,10 +1554,16 @@ input, textarea { -webkit-user-select: text; user-select: text; }
     </div>
     <div class="ios-list-row" style="cursor:pointer" onclick="triggerImport()">
       <div class="ios-row-icon" style="background:var(--green-bg)">📥</div>
-      <div class="ios-row-body"><div class="ios-row-title">インポート</div><div class="ios-row-sub">JSONファイルから記録を引き継ぎ</div></div>
+      <div class="ios-row-body"><div class="ios-row-title">インポート（上書き）</div><div class="ios-row-sub">JSONファイルで現在の記録を完全に置き換え</div></div>
       <div class="ios-chevron"></div>
     </div>
     <input type="file" id="import-file" accept=".json" style="display:none" onchange="doImport(event)">
+    <div class="ios-list-row" style="cursor:pointer" onclick="triggerImportDiff()">
+      <div class="ios-row-icon" style="background:rgba(255,159,10,.15)">🔀</div>
+      <div class="ios-row-body"><div class="ios-row-title">差分インポート（マージ）</div><div class="ios-row-sub">他端末の記録を、現在のデータに追加・統合</div></div>
+      <div class="ios-chevron"></div>
+    </div>
+    <input type="file" id="import-file-diff" accept=".json" style="display:none" onchange="doImportDiff(event)">
   </div>
   <div style="font-size:12px;color:var(--red);padding:6px 22px" id="import-status"></div>
 
@@ -1545,6 +1580,28 @@ input, textarea { -webkit-user-select: text; user-select: text; }
       <div style="font-size:10px;color:rgba(28,24,20,.4);margin-top:2px">明るいテーマ</div>
     </div>
   </div>
+
+  <div class="sec-label">アプリアイコン</div>
+  <div class="ios-card" style="margin:0 16px 8px">
+    <div class="ios-card-body" style="display:flex;align-items:center;gap:14px">
+      <img id="icon-preview" style="width:56px;height:56px;border-radius:13px;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,.25)">
+      <div style="flex:1;font-size:12px;color:var(--lbl3);line-height:1.6">
+        絵文字とグラデーションを選んでホーム画面アイコンをカスタマイズできます。<br>
+        変更後、ホーム画面に再追加すると反映されます。
+      </div>
+    </div>
+  </div>
+
+  <div style="margin:0 16px 8px;font-size:12px;color:var(--lbl3)">絵文字</div>
+  <div id="icon-emoji-grid" style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin:0 16px 12px"></div>
+  <div style="margin:0 16px 4px;display:flex;align-items:center;gap:8px">
+    <input type="text" id="icon-emoji-custom" maxlength="4" placeholder="絵文字を入力" style="flex:1;background:var(--sys-bg2);color:var(--lbl);border:1px solid var(--sys-bg4);border-radius:8px;padding:8px 10px;font-size:16px;text-align:center">
+    <button onclick="setIconEmojiCustom()" style="padding:8px 14px;border-radius:8px;border:none;background:var(--blue);color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:sans-serif">設定</button>
+  </div>
+
+  <div style="margin:16px 16px 8px;font-size:12px;color:var(--lbl3)">背景グラデーション</div>
+  <div id="icon-color-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:0 16px 12px"></div>
+
   <div class="sec-label">タイマー</div>
   <div class="ios-list" style="margin:0 8px">
     <div class="ios-list-row">
@@ -1902,7 +1959,18 @@ function getSUBJS(){
   const overrides=(cfg&&cfg.subjOverrides)||{};
   const base=DEFAULT_SUBJS.map(s=>overrides[s.id]?{...s,...overrides[s.id],id:s.id}:s);
   const customs=(cfg&&cfg.subjs)||[];
-  return [...base,...customs];
+  const all=[...base,...customs];
+  // 非表示科目を除外
+  const hidden=new Set((cfg&&cfg.hiddenSubjs)||[]);
+  const visible=all.filter(s=>!hidden.has(s.id));
+  // 並び順を適用
+  const order=(cfg&&cfg.subjOrder)||[];
+  if(!order.length)return visible;
+  const ordered=[];
+  order.forEach(function(id){const s=visible.find(function(x){return x.id===id;});if(s)ordered.push(s);});
+  // orderに含まれていない科目は末尾に追加
+  visible.forEach(function(s){if(order.indexOf(s.id)<0)ordered.push(s);});
+  return ordered;
 }
 // 後方互換：旧SUBJS参照を維持
 Object.defineProperty(window,'SUBJS',{get:function(){return getSUBJS();}});
@@ -4180,9 +4248,75 @@ function renderCal(){
   }
   document.getElementById('cal-grid').innerHTML=html;
   if(calSel)showCalDetail(calSel);
+  _initCalSwipe();
 }
-function calP(){calM--;if(calM<0){calM=11;calY--;}calSel=null;renderCal();}
-function calN(){calM++;if(calM>11){calM=0;calY++;}calSel=null;renderCal();}
+function calP(){_calChangeMonth(-1);}
+function calN(){_calChangeMonth(1);}
+function _calChangeMonth(dir,skipAnim){
+  const wrap=document.querySelector('#pg-hist .cal-wrap');
+  calM+=dir;
+  if(calM<0){calM=11;calY--;}
+  else if(calM>11){calM=0;calY++;}
+  calSel=null;
+  if(wrap&&!skipAnim){
+    // 古い内容をスライドアウトしつつ、新しい内容をスライドインで切替
+    wrap.style.transition='none';
+    wrap.style.transform='translateY('+(dir>0?'-14px':'14px')+')';
+    wrap.style.opacity='0.3';
+    renderCal();
+    requestAnimationFrame(function(){
+      wrap.style.transition='transform .18s ease-out,opacity .18s ease-out';
+      wrap.style.transform='translateY(0)';
+      wrap.style.opacity='1';
+    });
+  } else {
+    renderCal();
+  }
+}
+
+function _initCalSwipe(){
+  const wrap=document.querySelector('#pg-hist .cal-wrap');
+  if(!wrap||wrap._swipeInit)return;
+  wrap._swipeInit=true;
+  let sx=0,sy=0,sTime=0,dragging=false;
+
+  wrap.addEventListener('touchstart',function(e){
+    sx=e.touches[0].clientX;sy=e.touches[0].clientY;sTime=Date.now();
+    dragging=!(e.target.closest&&e.target.closest('.cal-day2,.cal-nav-btn'));
+  },{passive:true});
+
+  wrap.addEventListener('touchmove',function(e){
+    if(!dragging)return;
+    const dx=e.touches[0].clientX-sx;
+    const dy=e.touches[0].clientY-sy;
+    if(Math.abs(dy)<=Math.abs(dx))return; // 横方向優勢ならスクロールに譲る
+    if(Math.abs(dy)<10)return;
+    e.preventDefault();
+    wrap.style.transition='none';
+    wrap.style.transform='translateY('+(dy*0.35)+'px)';
+    wrap.style.opacity=String(Math.max(0.5,1-Math.abs(dy)/400));
+  },{passive:false});
+
+  wrap.addEventListener('touchend',function(e){
+    if(!dragging)return;
+    const dx=e.changedTouches[0].clientX-sx;
+    const dy=e.changedTouches[0].clientY-sy;
+    const dt=Date.now()-sTime;
+    wrap.style.transition='transform .18s ease-out,opacity .18s ease-out';
+    wrap.style.transform='';wrap.style.opacity='';
+
+    if(Math.abs(dy)<=Math.abs(dx)||dt>500||Math.abs(dy)<40){
+      return;
+    }
+    if(dy<0){
+      // 上スワイプ → 次月
+      _calChangeMonth(1);
+    } else {
+      // 下スワイプ → 前月
+      _calChangeMonth(-1);
+    }
+  },{passive:true});
+}
 function calSel2(d){calSel=d;renderCal();}
 function showCalDetail(dstr){
   const wrap=document.getElementById('cal-detail-sec');
@@ -4487,10 +4621,10 @@ function renderStats(){
 
   // Subject infographic
   (()=>{
-    const tantoSubjs=SUBJS.filter(s=>s.exam==='tanto');
-    const ronbunSubjs=SUBJS.filter(s=>s.exam==='ronbun');
+    const tantoSubjs=SUBJS.filter(s=>s.exam==='tanto'||s.exam==='both');
+    const ronbunSubjs=SUBJS.filter(s=>s.exam==='ronbun'||s.exam==='both');
     const tMin=totMin(sess.filter(s=>tantoSubjs.some(x=>x.id===(s.subjId||s.subject))));
-    const rMin=totMin(sess.filter(s=>ronbunSubjs.some(x=>x.id===(s.subjId||s.subject))));
+    const rMin=totMin(sess.filter(s=>ronbunSubjs.filter(x=>x.exam==='ronbun').some(x=>x.id===(s.subjId||s.subject))));
     const totalTarget=SUBJS.reduce((a,s)=>a+s.target,0);
     const totalStudied=h1(totMin(sess));
     const overallPct=Math.min(100,Math.round(totalStudied/totalTarget*100));
@@ -4544,13 +4678,13 @@ function renderStats(){
       </div>
       <!-- tanto -->
       <div style="background:var(--sys-bg2);border-radius:var(--r-lg);padding:16px;margin-bottom:8px">
-        <div style="font-size:11px;font-weight:700;color:var(--in-c);letter-spacing:.5px;margin-bottom:12px">SHORT ／ 短答式</div>
+        <div style="font-size:11px;font-weight:700;color:var(--in-c);letter-spacing:.5px;margin-bottom:12px">SHORT ／ 短答式（論文兼用含む）</div>
         ${tantoSubjs.map(mkSubjRow).join('')}
       </div>
       <!-- ronbun -->
       <div style="background:var(--sys-bg2);border-radius:var(--r-lg);padding:16px;margin-bottom:8px">
-        <div style="font-size:11px;font-weight:700;color:var(--out-c);letter-spacing:.5px;margin-bottom:12px">ESSAY ／ 論文式</div>
-        ${ronbunSubjs.map(mkSubjRow).join('')}
+        <div style="font-size:11px;font-weight:700;color:var(--out-c);letter-spacing:.5px;margin-bottom:12px">ESSAY ／ 論文専用科目</div>
+        ${ronbunSubjs.filter(s=>s.exam==='ronbun').map(mkSubjRow).join('')}
       </div>`;
   })();
 
@@ -4593,7 +4727,7 @@ function loadCfgUI(){
   document.getElementById('set-hours').value=cfg.goalHours||3500;
   document.getElementById('set-daily').value=cfg.daily||180;
   document.getElementById('set-notif-time').value=cfg.notifTime||'08:00';
-  renderTestsSet();updateNotifStatus();
+  renderTestsSet();updateNotifStatus();renderIconSettings();
 }
 function renderTestsSet(){
   const el=document.getElementById('tests-set-list'),tests=cfg.tests||[];
@@ -4865,12 +4999,234 @@ function closeSubjSheet(){
   _editingSubjId=null;
 }
 
+/* ── 科目管理（並び替え・非表示） ── */
+function openSubjOrderSheet(){
+  renderSubjOrderList();
+  document.getElementById('subj-order-sheet').style.display='block';
+}
+function closeSubjOrderSheet(){
+  document.getElementById('subj-order-sheet').style.display='none';
+  populateSels();renderUnits();refreshHome();
+}
+function resetSubjOrder(){
+  cfg.subjOrder=[];cfg.hiddenSubjs=[];saveAll();renderSubjOrderList();toast('順序をリセットしました');
+}
+
+function renderSubjOrderList(){
+  const list=document.getElementById('subj-order-list');
+  if(!list)return;
+  const hidden=new Set((cfg.hiddenSubjs)||[]);
+  // 全科目（非表示含む）を現在のorder順に並べる
+  const order=(cfg.subjOrder)||[];
+  const overrides=(cfg.subjOverrides)||{};
+  const base=DEFAULT_SUBJS.map(s=>overrides[s.id]?{...s,...overrides[s.id],id:s.id}:s);
+  const customs=(cfg.subjs)||[];
+  const all=[...base,...customs];
+  // orderに従って並べ、残りを末尾に追加
+  const ordered=[];
+  order.forEach(function(id){const s=all.find(function(x){return x.id===id;});if(s)ordered.push(s);});
+  all.forEach(function(s){if(order.indexOf(s.id)<0)ordered.push(s);});
+
+  list.innerHTML=ordered.map(function(s,i){
+    const isHidden=hidden.has(s.id);
+    const isDefault=DEFAULT_SUBJS.some(function(d){return d.id===s.id;});
+    return '<div class="subj-sort-row" data-sid="'+s.id+'" style="display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--sys-bg);border-bottom:1px solid var(--sep);opacity:'+(isHidden?'.4':'1')+'">'
+      +'<div style="width:4px;height:24px;border-radius:2px;background:'+s.color+';flex-shrink:0"></div>'
+      +'<span style="font-size:13px;font-weight:600;color:var(--lbl);flex:1">'+(isHidden?'<span style="font-size:10px;color:var(--lbl4)">[非表示] </span>':'')+esc(s.name)+'</span>'
+      +'<button onclick="toggleSubjHidden(\''+s.id+'\')" style="padding:4px 10px;border-radius:6px;border:1px solid var(--sep);background:'+(isHidden?'var(--green-bg)':'var(--sys-bg3)')+';color:'+(isHidden?'var(--green)':'var(--lbl3)')+';font-size:11px;cursor:pointer;font-family:sans-serif;flex-shrink:0">'+(isHidden?'表示':'非表示')+'</button>'
+      +'<div class="subj-drag-handle" style="padding:4px 8px;color:var(--lbl4);font-size:18px;cursor:grab;touch-action:none;flex-shrink:0">⠿</div>'
+      +'</div>';
+  }).join('');
+
+  _initSubjDrag(list);
+}
+
+function toggleSubjHidden(id){
+  if(!cfg.hiddenSubjs)cfg.hiddenSubjs=[];
+  const idx=cfg.hiddenSubjs.indexOf(id);
+  if(idx>=0)cfg.hiddenSubjs.splice(idx,1);
+  else cfg.hiddenSubjs.push(id);
+  saveAll();renderSubjOrderList();
+}
+
+function _initSubjDrag(list){
+  // タッチドラッグで並び替え
+  let draggingEl=null,startY=0,origIdx=0;
+  list.querySelectorAll('.subj-drag-handle').forEach(function(handle){
+    handle.addEventListener('touchstart',function(e){
+      e.stopPropagation();
+      draggingEl=handle.closest('.subj-sort-row');
+      if(!draggingEl)return;
+      startY=e.touches[0].clientY;
+      origIdx=Array.from(list.children).indexOf(draggingEl);
+      draggingEl.style.background='var(--blue-bg)';
+      draggingEl.style.boxShadow='0 4px 16px rgba(0,0,0,.3)';
+      draggingEl.style.zIndex='10';
+      draggingEl.style.position='relative';
+    },{passive:true});
+
+    handle.addEventListener('touchmove',function(e){
+      if(!draggingEl)return;
+      e.preventDefault();e.stopPropagation();
+      const dy=e.touches[0].clientY-startY;
+      draggingEl.style.transform='translateY('+dy+'px)';
+      // ホバー先を検出して並び替えプレビュー
+      const rows=Array.from(list.querySelectorAll('.subj-sort-row'));
+      const dragRect=draggingEl.getBoundingClientRect();
+      const dragMid=dragRect.top+dragRect.height/2;
+      rows.forEach(function(row){
+        if(row===draggingEl)return;
+        const rect=row.getBoundingClientRect();
+        const mid=rect.top+rect.height/2;
+        if(dragMid<mid){
+          list.insertBefore(draggingEl,row);
+          startY=e.touches[0].clientY;
+          draggingEl.style.transform='';
+        } else if(dragMid>mid&&row.nextSibling){
+          list.insertBefore(draggingEl,row.nextSibling);
+          startY=e.touches[0].clientY;
+          draggingEl.style.transform='';
+        }
+      });
+    },{passive:false});
+
+    handle.addEventListener('touchend',function(){
+      if(!draggingEl)return;
+      draggingEl.style.background='';
+      draggingEl.style.boxShadow='';
+      draggingEl.style.zIndex='';
+      draggingEl.style.position='';
+      draggingEl.style.transform='';
+      // 現在の順序をcfg.subjOrderに保存
+      cfg.subjOrder=Array.from(list.querySelectorAll('.subj-sort-row')).map(function(r){return r.getAttribute('data-sid');});
+      saveAll();
+      draggingEl=null;
+    },{passive:true});
+  });
+}
+
 function closeWeekPlanSheet(){
   document.getElementById('week-plan-sheet').style.display='none';
 }
 
 function doExport(){const data={sess,units,cards,cfg,exportedAt:new Date().toISOString(),version:2};const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='cpa-study-'+ds(new Date())+'.json';a.click();toast('📤 エクスポートしました');}
 function triggerImport(){document.getElementById('import-file').click();}
+function triggerImportDiff(){document.getElementById('import-file-diff').click();}
+
+// ── 差分インポート（マージ） ──
+function _mergeHistoryArr(a,b){
+  const merged=(a||[]).concat(b||[]);
+  const seen=new Set();
+  const uniq=merged.filter(function(h){
+    const k=h.date+'|'+h.r;
+    if(seen.has(k))return false;
+    seen.add(k);return true;
+  });
+  uniq.sort(function(x,y){return x.date<y.date?-1:x.date>y.date?1:0;});
+  return uniq;
+}
+function _mergeUnitInto(ex,iu){
+  let changed=false;
+  if(iu.history&&iu.history.length){
+    const before=JSON.stringify(ex.history||[]);
+    ex.history=_mergeHistoryArr(ex.history,iu.history);
+    if(JSON.stringify(ex.history)!==before)changed=true;
+  }
+  if(iu.subUnits&&iu.subUnits.length){
+    if(!ex.subUnits)ex.subUnits=[];
+    const subMap={};
+    ex.subUnits.forEach(function(su){subMap[su.id]=su;});
+    iu.subUnits.forEach(function(isu){
+      const exsu=subMap[isu.id];
+      if(!exsu){
+        ex.subUnits.push(isu);subMap[isu.id]=isu;changed=true;
+      } else if(isu.history&&isu.history.length){
+        const before=JSON.stringify(exsu.history||[]);
+        exsu.history=_mergeHistoryArr(exsu.history,isu.history);
+        if(JSON.stringify(exsu.history)!==before){_updateExState(exsu);changed=true;}
+      }
+    });
+  }
+  // 単元定着の進捗（stage/nextDate）：より進んでいる方を採用
+  if((iu.stage||0)>(ex.stage||0)){
+    ex.stage=iu.stage;ex.nextDate=iu.nextDate;changed=true;
+  }
+  if((iu.studyCount||0)>(ex.studyCount||0)){ex.studyCount=iu.studyCount;changed=true;}
+  if(iu.lastStudied&&(!ex.lastStudied||iu.lastStudied>ex.lastStudied)){ex.lastStudied=iu.lastStudied;changed=true;}
+  // 演習リマインド（◯×△）の状態を履歴から再計算
+  if(ex.history&&ex.history.length)_updateExState(ex);
+  return changed;
+}
+
+function doImportDiff(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(ev){
+    try{
+      const data=JSON.parse(ev.target.result);
+      if(!Array.isArray(data.sess)&&!Array.isArray(data.sessions)){throw new Error('無効なファイル形式');}
+
+      // ── セッション履歴: idで重複除去してマージ ──
+      const importedSess=migrate(data.sess||data.sessions||[]);
+      const existingSessIds=new Set(sess.map(function(s){return s.id;}));
+      let addedSess=0;
+      importedSess.forEach(function(s){
+        if(!existingSessIds.has(s.id)){sess.push(s);existingSessIds.add(s.id);addedSess++;}
+      });
+
+      // ── 単元: idでマージ（履歴統合・進捗は進んでいる方を採用） ──
+      let addedUnits=0,updatedUnits=0;
+      const unitMap={};
+      units.forEach(function(u){unitMap[u.id]=u;});
+      (data.units||[]).forEach(function(iu){
+        const ex=unitMap[iu.id];
+        if(!ex){units.push(iu);unitMap[iu.id]=iu;addedUnits++;}
+        else if(_mergeUnitInto(ex,iu))updatedUnits++;
+      });
+
+      // ── 暗記カード: idでマージ ──
+      let addedCards=0,updatedCards=0;
+      const cseen=new Set();
+      cards=cards.filter(function(c){if(cseen.has(c.id))return false;cseen.add(c.id);return true;});
+      const cardMap={};
+      cards.forEach(function(c){cardMap[c.id]=c;});
+      (data.cards||[]).forEach(function(ic){
+        const ex=cardMap[ic.id];
+        if(!ex){
+          if(!cseen.has(ic.id)){cards.push(ic);cseen.add(ic.id);cardMap[ic.id]=ic;addedCards++;}
+        } else if((ic.stage||0)>(ex.stage||0)){
+          ex.stage=ic.stage;ex.nextDate=ic.nextDate;updatedCards++;
+        }
+      });
+
+      // ── 設定: テスト日程はマージ、その他は欠けている項目のみ補完（現在の設定を優先） ──
+      let addedTests=0;
+      if(data.cfg&&Array.isArray(data.cfg.tests)){
+        if(!cfg.tests)cfg.tests=[];
+        const existKeys=new Set(cfg.tests.map(function(t){return t.name+'|'+t.date;}));
+        data.cfg.tests.forEach(function(t){
+          const k=t.name+'|'+t.date;
+          if(!existKeys.has(k)){cfg.tests.push(t);existKeys.add(k);addedTests++;}
+        });
+      }
+      if(data.cfg){
+        Object.keys(data.cfg).forEach(function(k){
+          if(k==='tests')return;
+          if(cfg[k]===undefined)cfg[k]=data.cfg[k];
+        });
+      }
+
+      saveAll();refreshHome();renderStats();renderUnits();renderFC();renderReview();updateNavBadge();loadCfgUI();
+      document.getElementById('import-status').textContent=
+        '✅ 差分取込完了：セッション+'+addedSess+'件・単元+'+addedUnits+'/更新'+updatedUnits+'件・カード+'+addedCards+'/更新'+updatedCards+'枚・テスト+'+addedTests+'件';
+      toast('🔀 差分データを取り込みました');
+    }catch(err){
+      document.getElementById('import-status').textContent='❌ エラー: '+err.message;
+      toast('❌ 差分インポートに失敗しました');
+    }
+  };
+  reader.readAsText(file);e.target.value='';
+}
 function doImport(e){
   const file=e.target.files[0];if(!file)return;
   const reader=new FileReader();
@@ -4929,14 +5285,41 @@ function genIconDataURL(size){
   const c=document.createElement('canvas');c.width=size;c.height=size;
   const ctx=c.getContext('2d');
   const r=size*.22;ctx.beginPath();ctx.moveTo(r,0);ctx.lineTo(size-r,0);ctx.quadraticCurveTo(size,0,size,r);ctx.lineTo(size,size-r);ctx.quadraticCurveTo(size,size,size-r,size);ctx.lineTo(r,size);ctx.quadraticCurveTo(0,size,0,size-r);ctx.lineTo(0,r);ctx.quadraticCurveTo(0,0,r,0);ctx.closePath();
-  const grad=ctx.createLinearGradient(0,0,size,size);grad.addColorStop(0,'#0D2040');grad.addColorStop(1,'#1A3356');
+  const c1=cfg.iconColor1||'#0D2040', c2=cfg.iconColor2||'#1A3356';
+  const grad=ctx.createLinearGradient(0,0,size,size);grad.addColorStop(0,c1);grad.addColorStop(1,c2);
   ctx.fillStyle=grad;ctx.fill();
-  ctx.font=`${size*.52}px serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('📖',size/2,size/2+size*.03);
+  const emoji=cfg.iconEmoji||'📖';
+  ctx.font=`${size*.52}px serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(emoji,size/2,size/2+size*.03);
   return c.toDataURL('image/png');
 }
-function setAppIcon(){try{const url=genIconDataURL(180);let link=document.getElementById('ati-link');if(!link){link=document.createElement('link');link.id='ati-link';link.rel='apple-touch-icon';document.head.appendChild(link);}link.href=url;}catch(e){}}
-const SW_CODE=`const CACHE='cpa-v3';self.addEventListener('install',e=>{e.waitUntil(self.skipWaiting())});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(caches.match(e.request).then(cached=>{const fresh=fetch(e.request).then(resp=>{if(resp&&resp.status===200){const r=resp.clone();caches.open(CACHE).then(c=>c.put(e.request,r));}return resp;}).catch(()=>cached||new Response('',{status:503}));return cached||fresh;}))});`;
-function registerSW(){if(!('serviceWorker'in navigator))return;try{const blob=new Blob([SW_CODE],{type:'application/javascript'});const url=URL.createObjectURL(blob);navigator.serviceWorker.register(url,{scope:'./'}).then(()=>URL.revokeObjectURL(url)).catch(()=>{});}catch(e){}}
+function setAppIcon(){try{const url=genIconDataURL(180);let link=document.getElementById('ati-link');if(!link){link=document.createElement('link');link.id='ati-link';link.rel='apple-touch-icon';document.head.appendChild(link);}link.href=url;
+  // favicon も合わせて更新
+  let fav=document.getElementById('fav-link');
+  if(!fav){fav=document.createElement('link');fav.id='fav-link';fav.rel='icon';document.head.appendChild(fav);}
+  fav.href=genIconDataURL(64);
+}catch(e){}}
+const SW_CODE=`const CACHE='cpa-v4';self.addEventListener('install',e=>{e.waitUntil(self.skipWaiting())});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(fetch(e.request).then(resp=>{if(resp&&resp.status===200){const r=resp.clone();caches.open(CACHE).then(c=>c.put(e.request,r));}return resp;}).catch(()=>caches.match(e.request).then(cached=>cached||new Response('',{status:503}))))});`;
+function registerSW(){
+  if(!('serviceWorker'in navigator))return;
+  try{
+    var hadController=!!navigator.serviceWorker.controller;
+    var blob=new Blob([SW_CODE],{type:'application/javascript'});
+    var url=URL.createObjectURL(blob);
+    navigator.serviceWorker.register(url,{scope:'./'}).then(function(reg){
+      URL.revokeObjectURL(url);
+      if(hadController){
+        // 既に旧SWが動作中 → 新SWに切り替わったら一度だけ自動リロードして最新コードを反映
+        var refreshed=false;
+        navigator.serviceWorker.addEventListener('controllerchange',function(){
+          if(refreshed)return;refreshed=true;
+          window.location.reload();
+        });
+      }
+      // 念のため定期的に更新確認（ページを開いたままの場合に備える）
+      if(reg&&reg.update)setInterval(function(){reg.update().catch(function(){});},60*1000);
+    }).catch(function(){});
+  }catch(e){}
+}
 function checkInstallBanner(){const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);const isStandalone=window.navigator.standalone===true||window.matchMedia('(display-mode: standalone)').matches;const dismissed=localStorage.getItem('cpa_ib_dismissed');if(isIOS&&!isStandalone&&!dismissed){setTimeout(()=>{const b=document.getElementById('install-banner');if(b)b.style.display='flex';},3000);}}
 function dismissInstallBanner(){const b=document.getElementById('install-banner');if(!b)return;b.style.opacity='0';b.style.transform='translateY(10px)';b.style.transition='all .25s';setTimeout(()=>{b.style.display='none';},250);localStorage.setItem('cpa_ib_dismissed','1');}
 function dismissSplash(){const s=document.getElementById('splash');if(!s)return;s.classList.add('hide');setTimeout(()=>{if(s.parentNode)s.parentNode.removeChild(s);},600);}
@@ -4958,6 +5341,77 @@ function applyTheme(theme){
 function setTheme(theme){
   cfg.theme=theme; saveAll(); applyTheme(theme);
   toast(theme==='cream'?'☀️ クリームテーマに変更しました':'🌙 ダークテーマに変更しました');
+}
+
+/* ── アプリアイコン設定 ── */
+const ICON_EMOJI_PRESETS=['📖','📚','✏️','📝','🎓','⚖️','💼','📊','🧮','🔥','⭐','🏆'];
+const ICON_COLOR_PRESETS=[
+  {c1:'#0D2040',c2:'#1A3356',name:'ネイビー'},
+  {c1:'#1A3D2E',c2:'#2D5C46',name:'グリーン'},
+  {c1:'#3D1A2E',c2:'#5C2D46',name:'ボルドー'},
+  {c1:'#3D2E0D',c2:'#5C4A1A',name:'ブラウン'},
+  {c1:'#1A2E3D',c2:'#2D4A5C',name:'スレート'},
+  {c1:'#2E1A3D',c2:'#4A2D5C',name:'パープル'},
+  {c1:'#3D0D0D',c2:'#5C1A1A',name:'レッド'},
+  {c1:'#1A1A1A',c2:'#3D3D3D',name:'グレー'},
+];
+
+function renderIconSettings(){
+  // プレビュー
+  const prev=document.getElementById('icon-preview');
+  if(prev)prev.src=genIconDataURL(112);
+
+  // 絵文字グリッド
+  const eg=document.getElementById('icon-emoji-grid');
+  if(eg){
+    const cur=cfg.iconEmoji||'📖';
+    eg.innerHTML=ICON_EMOJI_PRESETS.map(function(e){
+      const on=e===cur;
+      return '<button class="icon-emoji-btn" data-emoji="'+e+'" style="aspect-ratio:1;border-radius:10px;border:2px solid '+(on?'var(--blue)':'var(--sep)')+';background:'+(on?'rgba(10,132,255,.12)':'var(--sys-bg2)')+';font-size:24px;cursor:pointer;display:flex;align-items:center;justify-content:center">'+e+'</button>';
+    }).join('');
+    eg.onclick=function(e){
+      const btn=e.target.closest('.icon-emoji-btn');
+      if(!btn)return;
+      cfg.iconEmoji=btn.getAttribute('data-emoji');
+      saveAll();setAppIcon();renderIconSettings();
+    };
+  }
+
+  // カラーグリッド
+  const cg=document.getElementById('icon-color-grid');
+  if(cg){
+    const curC1=cfg.iconColor1||'#0D2040';
+    cg.innerHTML=ICON_COLOR_PRESETS.map(function(p){
+      const on=p.c1===curC1;
+      return '<button class="icon-color-btn" data-c1="'+p.c1+'" data-c2="'+p.c2+'" '
+        +'style="aspect-ratio:1;border-radius:10px;border:2px solid '+(on?'var(--blue)':'transparent')+';'
+        +'background:linear-gradient(135deg,'+p.c1+','+p.c2+');cursor:pointer;display:flex;align-items:center;justify-content:center;'
+        +'box-shadow:'+(on?'0 0 0 2px var(--blue)':'none')+'">'
+        +(on?'<span style="color:#fff;font-size:14px">✓</span>':'')
+        +'</button>';
+    }).join('');
+    cg.onclick=function(e){
+      const btn=e.target.closest('.icon-color-btn');
+      if(!btn)return;
+      cfg.iconColor1=btn.getAttribute('data-c1');
+      cfg.iconColor2=btn.getAttribute('data-c2');
+      saveAll();setAppIcon();renderIconSettings();
+    };
+  }
+
+  // カスタム絵文字入力欄に現在値を反映
+  const customInput=document.getElementById('icon-emoji-custom');
+  if(customInput&&document.activeElement!==customInput)customInput.value='';
+}
+
+function setIconEmojiCustom(){
+  const el=document.getElementById('icon-emoji-custom');
+  if(!el)return;
+  const v=el.value.trim();
+  if(!v){toast('絵文字を入力してください');return;}
+  cfg.iconEmoji=v;
+  saveAll();setAppIcon();renderIconSettings();
+  toast('アイコンを更新しました');
 }
 
 
@@ -5072,6 +5526,114 @@ function selectQuizSubj(id){
   const s=_getSubjects().find(function(x){return x.id===id;});
   const t=document.getElementById('nav-large-title');
   if(t&&s) t.textContent=s.name+' 短答';
+  // 科目切替時は通常モードに戻し、弱点タブも更新
+  if(_quizMode==='wrong')renderWrongPane();
+}
+
+// ── 弱点ログ関連 ──
+var _quizMode='normal'; // 'normal' | 'wrong'
+
+function setQuizMode(mode){
+  _quizMode=mode;
+  var nb=document.getElementById('quiz-mode-normal');
+  var wb=document.getElementById('quiz-mode-wrong');
+  var qa=document.getElementById('quiz-area');
+  var qw=document.getElementById('quiz-wrong-pane');
+  var qr=document.getElementById('quiz-result');
+  var filterRow=document.querySelector('#pg-quiz .quiz-filter-rows');
+  if(nb){nb.style.background=mode==='normal'?'var(--blue)':'var(--sys-bg2)';nb.style.color=mode==='normal'?'#fff':'var(--lbl)';}
+  if(wb){wb.style.background=mode==='wrong'?'#FF453A':'var(--sys-bg2)';wb.style.color=mode==='wrong'?'#fff':'var(--lbl)';}
+  if(mode==='wrong'){
+    if(qa)qa.style.display='none';
+    if(qr)qr.style.display='none';
+    if(qw){qw.style.display='block';renderWrongPane();}
+  } else {
+    if(qa)qa.style.display='block';
+    if(qw)qw.style.display='none';
+  }
+}
+
+function showWrongTab(){setQuizMode('wrong');}
+
+function renderWrongPane(){
+  var pane=document.getElementById('quiz-wrong-pane');
+  if(!pane)return;
+  var sid=_quizSubjId||'';
+  var log=cfg.wrongLog&&cfg.wrongLog[sid]?cfg.wrongLog[sid]:{};
+  var entries=Object.values(log).sort(function(a,b){return b.count-a.count;});
+
+  if(!entries.length){
+    pane.innerHTML='<div style="text-align:center;padding:32px 0;color:var(--lbl3)">'
+      +'<div style="font-size:32px;margin-bottom:8px">✅</div>'
+      +'<div style="font-size:13px">まだ間違えた問題はありません</div></div>';
+    return;
+  }
+
+  // 全弱点問題でクイズ開始ボタン
+  var topN=Math.min(entries.length,50);
+  var html='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">'
+    +'<span style="font-size:12px;color:var(--lbl3)">累計 '+entries.length+' 問</span>'
+    +'<div style="display:flex;gap:6px">'
+    +'<button onclick="retryWrongAll()" style="padding:7px 14px;border-radius:8px;border:none;background:#FF453A;color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:sans-serif">🔁 全問再挑戦</button>'
+    +'<button onclick="clearWrongLog()" style="padding:7px 10px;border-radius:8px;border:1px solid var(--sep);background:var(--sys-bg2);color:var(--lbl3);font-size:11px;cursor:pointer;font-family:sans-serif">リセット</button>'
+    +'</div></div>';
+
+  // 上位ランキング表示
+  entries.forEach(function(e,i){
+    var barW=Math.round(e.count/entries[0].count*100);
+    var recentDates=(e.dates||[]).slice(-5).join('、').replace(/\d{4}-/g,'');
+    html+='<div style="background:var(--sys-bg2);border-radius:10px;padding:12px;margin-bottom:8px;border-left:3px solid #FF453A">'
+      +'<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">'
+      +'<span style="font-size:10px;font-weight:700;color:#fff;background:#FF453A;border-radius:4px;padding:1px 6px;flex-shrink:0">×'+e.count+'</span>'
+      +'<span style="font-size:11px;color:var(--lbl3);flex-shrink:0">No.'+e.no+'</span>'
+      +'<span style="font-size:11px;color:var(--lbl3);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(e.topic)+'</span>'
+      +'</div>'
+      +'<div style="font-size:12px;color:var(--lbl);line-height:1.5;margin-bottom:6px">'+esc(e.q)+'</div>'
+      +'<div style="font-size:10px;color:var(--lbl2);margin-bottom:6px">正解: '+(e.ans?'○':'×')+'　'+esc(e.exp)+'</div>'
+      +'<div style="display:flex;align-items:center;gap:6px">'
+      +'<div style="flex:1;height:4px;background:var(--sys-bg3);border-radius:2px;overflow:hidden">'
+      +'<div style="width:'+barW+'%;height:100%;background:#FF453A;border-radius:2px"></div></div>'
+      +'<span style="font-size:10px;color:var(--lbl4);flex-shrink:0">最終: '+esc(recentDates.split('、').pop()||'—')+'</span>'
+      +'</div>'
+      +'</div>';
+  });
+  pane.innerHTML=html;
+}
+
+function retryWrong(){
+  // 直前のセッションで間違えた問題を再演習
+  if(!quizWrong.length){toast('間違えた問題がありません');return;}
+  quizQueue=[...quizWrong];quizIdx=0;quizScore=0;quizWrong=[];
+  document.getElementById('quiz-result').style.display='none';
+  document.getElementById('quiz-area').style.display='block';
+  renderQuizCard();
+  toast('🔁 '+quizQueue.length+'問で再挑戦！');
+}
+
+function retryWrongAll(){
+  // wrongLogから全問題を復元して演習
+  var sid=_quizSubjId||'';
+  var log=cfg.wrongLog&&cfg.wrongLog[sid]?cfg.wrongLog[sid]:{};
+  var entries=Object.values(log);
+  if(!entries.length){toast('間違えた問題がありません');return;}
+  // 間違い回数の多い順で最大50問
+  var pool=entries.sort(function(a,b){return b.count-a.count;}).slice(0,50).map(function(e){
+    return {no:e.no,topic:e.topic,q:e.q,ans:e.ans,exp:e.exp,diff:'B',type:'tf'};
+  });
+  // シャッフル
+  for(var i=pool.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=pool[i];pool[i]=pool[j];pool[j]=t;}
+  setQuizMode('normal');
+  quizQueue=pool;quizIdx=0;quizScore=0;quizWrong=[];
+  document.getElementById('quiz-result').style.display='none';
+  renderQuizCard();
+  toast('🔁 弱点'+pool.length+'問で再挑戦！');
+}
+
+function clearWrongLog(){
+  var sid=_quizSubjId||'';
+  if(!confirm('この科目の弱点ログをリセットしますか？'))return;
+  if(cfg.wrongLog)delete cfg.wrongLog[sid];
+  saveAll();renderWrongPane();toast('弱点ログをリセットしました');
 }
 
 function initQuiz(){
@@ -5081,10 +5643,32 @@ function initQuiz(){
 
 let _quizTopicFilters=[];  // 選択中トピック（複数選択対応）
 let _quizTypeFilter='';    // 問題タイプ（''=全て, 'truefalse', 'fill'）
+let _quizWrongFilter=false; // 弱点のみフィルタ
+
+function toggleWrongFilter(){
+  _quizWrongFilter=!_quizWrongFilter;
+  var btn=document.getElementById('qt-wrong');
+  if(btn){
+    btn.style.background=_quizWrongFilter?'#FF453A':'var(--sys-bg2)';
+    btn.style.color=_quizWrongFilter?'#fff':'var(--lbl3)';
+    btn.style.borderColor=_quizWrongFilter?'#FF453A':'var(--sep)';
+  }
+  quizFilterChange();
+}
+
+// 現在の科目のwrongLogにあるNo.集合を返す
+function _getWrongNos(){
+  var sid=_quizSubjId||'';
+  var log=cfg.wrongLog&&cfg.wrongLog[sid]?cfg.wrongLog[sid]:{};
+  return new Set(Object.keys(log).map(Number));
+}
 
 function _initQuizFilters(){
   _quizTopicFilters=[];
   _quizTypeFilter='';
+  _quizWrongFilter=false;
+  var btn=document.getElementById('qt-wrong');
+  if(btn){btn.style.background='var(--sys-bg2)';btn.style.color='var(--lbl3)';btn.style.borderColor='var(--sep)';}
   document.getElementById('quiz-diff-sel').value='';
   setQuizType('');
   quizFilterChange();
@@ -5467,18 +6051,19 @@ function addQuizSubject(){
 }
 function quizFilterChange(){
   const diff=document.getElementById('quiz-diff-sel').value;
-  var _tflevel='';
   var _tfs=_quizTopicFilters.map(function(f){return f.indexOf('|')>=0?f.split('|')[0]:f;});
   var _tflevels=_quizTopicFilters.map(function(f){return f.indexOf('|')>=0?f.split('|')[1]:'';}).filter(Boolean);
+  var wrongNos=_quizWrongFilter?_getWrongNos():null;
   const n=_getAllQuiz().filter(function(q){
     var topicOk=!_tfs.length||_tfs.indexOf(q.topic)>=0;
     var levelOk=!_tflevels.length||_tflevels.indexOf(q.level)>=0;
-    return topicOk&&levelOk
+    var wrongOk=!wrongNos||wrongNos.has(q.no);
+    return topicOk&&levelOk&&wrongOk
       &&(diff?q.diff===diff:true)
       &&(_quizTypeFilter?(q.type||'truefalse')===_quizTypeFilter:true);
   }).length;
   const lbl=document.getElementById('quiz-count-lbl');
-  if(lbl)lbl.textContent=n+'問対象';
+  if(lbl)lbl.textContent=(_quizWrongFilter?'❌ 弱点 ':'')+n+'問対象';
   updateFilterBar();
   const area=document.getElementById('quiz-area');
   if(area)area.innerHTML='';
@@ -5490,6 +6075,9 @@ function updateFilterBar(){
   var bar=document.getElementById('quiz-filter-bar');
   if(!bar)return;
   var tags='';
+  if(_quizWrongFilter){
+    tags+='<span id="fb-wrong" style="background:rgba(255,69,58,.15);color:#FF453A;border-radius:12px;padding:3px 10px;font-size:11px;font-weight:600;cursor:pointer">❌ 弱点のみ ×</span>';
+  }
   if(_quizTopicFilters.length){
     var topicLabel=_quizTopicFilters.length===1?truncate(_quizTopicFilters[0].split('|')[0],16):_quizTopicFilters.length+'トピック';
     tags+='<span id="fb-topic" style="background:var(--blue-bg);color:var(--blue);border-radius:12px;padding:3px 10px;font-size:11px;font-weight:600;cursor:pointer">📂 '+esc(topicLabel)+' ×</span>';
@@ -5504,6 +6092,8 @@ function updateFilterBar(){
     tags+='<span id="fb-diff" style="background:var(--orange-bg);color:var(--orange);border-radius:12px;padding:3px 10px;font-size:11px;font-weight:600;cursor:pointer">'+dl+' ×</span>';
   }
   bar.innerHTML=tags;
+  var fw=document.getElementById('fb-wrong');
+  if(fw)fw.onclick=function(){toggleWrongFilter();};
   var ft=document.getElementById('fb-topic');
   if(ft)ft.onclick=function(){selectTopic('');};
   var fty=document.getElementById('fb-type');
@@ -5518,24 +6108,38 @@ function startQuiz(){
   const isRandom=!orderSel||orderSel.value==='random';
   var _tfs2=_quizTopicFilters.map(function(f){return f.indexOf('|')>=0?f.split('|')[0]:f;});
   var _tflvs2=_quizTopicFilters.map(function(f){return f.indexOf('|')>=0?f.split('|')[1]:'';}).filter(Boolean);
+  var wrongNos=_quizWrongFilter?_getWrongNos():null;
+  if(_quizWrongFilter&&wrongNos&&!wrongNos.size){toast('弱点問題がまだありません。まずクイズを解いてみましょう！');return;}
   let pool=_getAllQuiz().filter(function(q){
     var topicOk=!_tfs2.length||_tfs2.indexOf(q.topic)>=0;
     var levelOk=!_tflvs2.length||_tflvs2.indexOf(q.level)>=0;
-    return topicOk&&levelOk
+    var wrongOk=!wrongNos||wrongNos.has(q.no);
+    return topicOk&&levelOk&&wrongOk
       &&(diff?q.diff===diff:true)
       &&(_quizTypeFilter?(q.type||'truefalse')===_quizTypeFilter:true);
   });
   if(!pool.length){toast('該当する問題がありません');return;}
-  if(isRandom){
+  // 弱点モード時は間違い回数の多い順でソートした後シャッフル
+  if(_quizWrongFilter&&wrongNos){
+    var sid=_quizSubjId||'';
+    var log=cfg.wrongLog&&cfg.wrongLog[sid]?cfg.wrongLog[sid]:{};
+    pool.sort(function(a,b){
+      var ca=(log[String(a.no)]||{count:0}).count;
+      var cb=(log[String(b.no)]||{count:0}).count;
+      return cb-ca;
+    });
+  } else if(isRandom){
     for(var i=pool.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=pool[i];pool[i]=pool[j];pool[j]=t;}
   } else {
     pool.sort(function(a,b){return a.no-b.no;});
   }
+  setQuizMode('normal');
   quizQueue=[...pool];quizIdx=0;quizScore=0;quizWrong=[];
   _quizStartTime=Date.now();_quizQTimes=[];
   acquireWakeLock();
   renderQuizCard();
   _startQuizTimer();
+  if(_quizWrongFilter)toast('❌ 弱点'+pool.length+'問でスタート！');
 }
 
 function _startQuizTimer(){
@@ -5813,6 +6417,7 @@ function checkFill(blanks){
     if(correct)score++;else allCorrect=false;
     return{num:idx+1,key:keys[idx]||String(idx+1),ans:ans,user:userVal,correct:correct};
   });
+  if(!allCorrect)_logWrong(q);
   if(allCorrect)quizScore++;else quizWrong.push(q);
   _quizQTimes.push({no:q.no,sec:qSec,correct:allCorrect});
   // 結果表示
@@ -5941,10 +6546,27 @@ function skipQuiz(){
   renderQuizCard();
 }
 
+function _logWrong(q){
+  if(!cfg.wrongLog)cfg.wrongLog={};
+  const sid=_quizSubjId||'';
+  if(!cfg.wrongLog[sid])cfg.wrongLog[sid]={};
+  const key=String(q.no);
+  const prev=cfg.wrongLog[sid][key]||{no:q.no,topic:q.topic,q:q.q,ans:q.ans,exp:q.exp,count:0,dates:[]};
+  prev.count=(prev.count||0)+1;
+  const today=ds(new Date());
+  if(prev.dates[prev.dates.length-1]!==today)prev.dates.push(today);
+  if(prev.dates.length>30)prev.dates=prev.dates.slice(-30);
+  prev.lastDate=today;
+  // 問題文・解説は最新に更新
+  prev.topic=q.topic;prev.q=q.q;prev.ans=q.ans;prev.exp=q.exp;
+  cfg.wrongLog[sid][key]=prev;
+  saveAll();
+}
+
 function answerQuiz(userAns){
   const q=quizQueue[quizIdx];
   const correct=(q.ans===userAns);
-  if(correct)quizScore++;else quizWrong.push(q);
+  if(correct)quizScore++;else{quizWrong.push(q);_logWrong(q);}
   const qSec=Math.round((Date.now()-_quizQStartTime)/1000);
   _quizQTimes.push({no:q.no,sec:qSec,correct:correct});
   const area=document.getElementById('quiz-area');
@@ -6008,15 +6630,26 @@ function showQuizResult(){
   html+='</div>';
   html+='</div>';
   if(quizWrong.length){
-    html+='<div style="font-size:12px;font-weight:700;color:var(--lbl3);margin-bottom:8px">❌ 間違えた問題（'+quizWrong.length+'問）</div>';
+    html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">';
+    html+='<span style="font-size:12px;font-weight:700;color:var(--lbl3)">❌ 間違えた問題（'+quizWrong.length+'問）</span>';
+    html+='<button onclick="retryWrong()" style="padding:6px 14px;border-radius:8px;border:none;background:var(--red-bg);color:var(--red);font-size:12px;font-weight:700;cursor:pointer;font-family:sans-serif">🔁 再挑戦</button>';
+    html+='</div>';
     quizWrong.forEach(function(q){
+      var wCount=(cfg.wrongLog&&cfg.wrongLog[_quizSubjId||'']&&cfg.wrongLog[_quizSubjId||''][String(q.no)])
+        ?cfg.wrongLog[_quizSubjId||''][String(q.no)].count:1;
       html+='<div style="background:var(--sys-bg2);border-radius:10px;padding:12px;margin-bottom:8px;border-left:3px solid var(--red)">';
-      html+='<div style="font-size:11px;color:var(--lbl3);margin-bottom:4px">No.'+q.no+' '+esc(q.topic)+'</div>';
+      html+='<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">';
+      html+='<span style="font-size:11px;color:var(--lbl3)">No.'+q.no+' '+esc(q.topic)+'</span>';
+      html+='<span style="font-size:10px;background:var(--red-bg);color:var(--red);padding:1px 6px;border-radius:10px;font-weight:700;margin-left:auto">累計×'+wCount+'</span>';
+      html+='</div>';
       html+='<div style="font-size:13px;color:var(--lbl);line-height:1.5;margin-bottom:6px">'+esc(q.q)+'</div>';
       html+='<div style="font-size:11px;color:var(--lbl2);line-height:1.5">正解: '+(q.ans?'○':'×')+'　'+esc(q.exp)+'</div></div>';
     });
   }
-  html+='<button onclick="startQuiz()" style="width:100%;padding:13px;background:var(--blue);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:sans-serif;margin-top:4px">もう一度</button>';
+  html+='<div style="display:flex;gap:8px;margin-top:4px">';
+  html+='<button onclick="startQuiz()" style="flex:1;padding:13px;background:var(--blue);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:sans-serif">もう一度</button>';
+  html+='<button onclick="goPageByName(&apos;quiz&apos;);setTimeout(showWrongTab,100)" style="flex:1;padding:13px;background:var(--sys-bg2);color:var(--lbl);border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:sans-serif">📋 弱点一覧</button>';
+  html+='</div>';
   res.innerHTML=html;
 }
 
