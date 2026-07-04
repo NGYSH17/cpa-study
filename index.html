@@ -1851,6 +1851,26 @@ input, textarea { -webkit-user-select: text; user-select: text; }
   </div>
 </div>
 
+<!-- QUESTION EDIT SHEET -->
+<div class="sheet-overlay" id="qedit-ov" onclick="bgClose(event,'qedit-ov')">
+  <div class="sheet2">
+    <div class="sheet2-handle"></div>
+    <div class="sheet2-title">問題を修正 <span id="qedit-no" style="color:var(--lbl3);font-weight:400"></span></div>
+    <div class="fg2"><label class="fl2">問題文</label><textarea class="fi2" id="qedit-q" rows="5" style="resize:vertical"></textarea></div>
+    <div class="fg2"><label class="fl2">正誤</label>
+      <div style="display:flex;gap:8px">
+        <button type="button" id="qedit-ans-true" onclick="_qeditSetAns(true)" style="flex:1;padding:10px;border-radius:8px;border:2px solid var(--sep);background:transparent;color:var(--lbl);font-size:15px;font-weight:700;cursor:pointer;font-family:sans-serif">○</button>
+        <button type="button" id="qedit-ans-false" onclick="_qeditSetAns(false)" style="flex:1;padding:10px;border-radius:8px;border:2px solid var(--sep);background:transparent;color:var(--lbl);font-size:15px;font-weight:700;cursor:pointer;font-family:sans-serif">×</button>
+      </div>
+    </div>
+    <div class="fg2"><label class="fl2">解説文</label><textarea class="fi2" id="qedit-exp" rows="5" style="resize:vertical"></textarea></div>
+    <div class="sheet2-btns">
+      <button class="btn2 btn2-secondary" style="flex:1" onclick="closeQEditSheet()">キャンセル</button>
+      <button class="btn2 btn2-primary" style="flex:1" onclick="saveQEdit()">保存</button>
+    </div>
+  </div>
+</div>
+
 <!-- FLASHCARD EDIT SHEET -->
 <div class="sheet-overlay" id="fc-ov" onclick="bgClose(event,'fc-ov')">
   <div class="sheet2">
@@ -2308,6 +2328,109 @@ function completeTask(id){
   cfg.tasks=cfg.tasks.filter(t=>t.id!==id);
   saveAll();
   renderHomeTasks();
+}
+// ══ 短答問題の問題文・解説編集（演習中/一覧から） ══
+var _qeditCurrentNo=null;
+var _qeditCurrentAns=null;
+function _findQuizByNo(no){
+  no=Number(no);
+  for(var i=0;i<QUIZ_DATA.length;i++){if(QUIZ_DATA[i].no===no)return QUIZ_DATA[i];}
+  return null;
+}
+function openQEditSheet(no){
+  var q=_findQuizByNo(no);
+  if(!q){toast('⚠️ 問題が見つかりません');return;}
+  _qeditCurrentNo=q.no;
+  _qeditCurrentAns=q.ans;
+  document.getElementById('qedit-no').textContent='No.'+q.no;
+  document.getElementById('qedit-q').value=q.q;
+  document.getElementById('qedit-exp').value=q.exp||'';
+  _qeditRenderAnsButtons();
+  document.getElementById('qedit-ov').classList.add('open');
+}
+function _qeditSetAns(v){_qeditCurrentAns=v;_qeditRenderAnsButtons();}
+function _qeditRenderAnsButtons(){
+  var t=document.getElementById('qedit-ans-true'), f=document.getElementById('qedit-ans-false');
+  if(_qeditCurrentAns===true){
+    t.style.borderColor='var(--blue)';t.style.background='var(--blue-bg)';t.style.color='var(--blue)';
+    f.style.borderColor='var(--sep)';f.style.background='transparent';f.style.color='var(--lbl)';
+  } else {
+    f.style.borderColor='var(--red)';f.style.background='var(--red-bg)';f.style.color='var(--red)';
+    t.style.borderColor='var(--sep)';t.style.background='transparent';t.style.color='var(--lbl)';
+  }
+}
+function closeQEditSheet(){
+  document.getElementById('qedit-ov').classList.remove('open');
+  _qeditCurrentNo=null;
+}
+function saveQEdit(){
+  if(_qeditCurrentNo==null)return;
+  var q=_findQuizByNo(_qeditCurrentNo);
+  if(!q){toast('⚠️ 問題が見つかりません');closeQEditSheet();return;}
+  var newQ=document.getElementById('qedit-q').value.trim();
+  var newExp=document.getElementById('qedit-exp').value.trim();
+  var newAns=_qeditCurrentAns;
+  if(!newQ){toast('⚠️ 問題文を入力してください');return;}
+  // 変更前の値を履歴として記録（初回編集時のみ元の値を保存）
+  if(!cfg.quizEdits)cfg.quizEdits={};
+  var key=String(q.no);
+  if(!cfg.quizEdits[key]){
+    cfg.quizEdits[key]={no:q.no,topic:q.topic,before:{q:q.q,ans:q.ans,exp:q.exp},after:{},editedAt:new Date().toISOString()};
+  }
+  cfg.quizEdits[key].after={q:newQ,ans:newAns,exp:newExp};
+  cfg.quizEdits[key].editedAt=new Date().toISOString();
+  // 本体データを更新
+  q.q=newQ;q.ans=newAns;q.exp=newExp;
+  saveAll();
+  closeQEditSheet();
+  toast('✅ 修正を保存しました');
+  if(typeof renderWrongPane==='function'){try{renderWrongPane();}catch(e){}}
+}
+function getQuizEditCount(){
+  return cfg.quizEdits?Object.keys(cfg.quizEdits).length:0;
+}
+function exportQuizEdits(){
+  if(!cfg.quizEdits||!Object.keys(cfg.quizEdits).length){
+    toast('📝 変更点はまだありません');
+    return;
+  }
+  var lines=['# 短答問題 修正履歴（'+new Date().toLocaleString('ja-JP')+'）',''];
+  Object.keys(cfg.quizEdits).sort(function(a,b){return Number(a)-Number(b);}).forEach(function(key){
+    var e=cfg.quizEdits[key];
+    lines.push('## No.'+e.no+'（'+(e.topic||'')+'）');
+    lines.push('');
+    lines.push('**修正前:**');
+    lines.push('- 問題文: '+e.before.q);
+    lines.push('- 正誤: '+(e.before.ans?'○':'×'));
+    lines.push('- 解説: '+(e.before.exp||''));
+    lines.push('');
+    lines.push('**修正後:**');
+    lines.push('- 問題文: '+e.after.q);
+    lines.push('- 正誤: '+(e.after.ans?'○':'×'));
+    lines.push('- 解説: '+(e.after.exp||''));
+    lines.push('');
+    lines.push('---');
+    lines.push('');
+  });
+  var text=lines.join('\n');
+  if(navigator.share){
+    navigator.share({title:'短答問題修正履歴',text:text}).catch(function(){_qeditCopyFallback(text);});
+  } else {
+    _qeditCopyFallback(text);
+  }
+}
+function _qeditCopyFallback(text){
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(function(){toast('📋 修正履歴をコピーしました');}).catch(function(){
+      _qeditShowTextFallback(text);
+    });
+  } else {
+    _qeditShowTextFallback(text);
+  }
+}
+function _qeditShowTextFallback(text){
+  var w=window.open('','_blank');
+  if(w){w.document.write('<pre style="white-space:pre-wrap;font-family:sans-serif;padding:16px">'+esc(text)+'</pre>');}
 }
 function renderHomeTasks(){
   const el=document.getElementById('task-home-list');
@@ -4258,6 +4381,7 @@ function bgClose(e,id){
     else if(id==='unit-ov')closeUnit();
     else if(id==='fc-ov')closeFC();
     else if(id==='task-ov')closeTaskSheet();
+    else if(id==='qedit-ov')closeQEditSheet();
   }
 }
 function saveLog(){
@@ -5887,6 +6011,7 @@ function renderWrongPane(){
     +'<button onclick="retryWrongAll()" '+(weak.length?'':'disabled ')
     +'style="padding:7px 14px;border-radius:8px;border:none;background:'+(weak.length?'#FF453A':'var(--sys-bg3)')+';color:'+(weak.length?'#fff':'var(--lbl4)')+';font-size:12px;font-weight:700;cursor:'+(weak.length?'pointer':'default')+';font-family:sans-serif">🔁 弱点を回す</button>'
     +'<button onclick="clearWrongLog()" style="padding:7px 10px;border-radius:8px;border:1px solid var(--sep);background:var(--sys-bg2);color:var(--lbl3);font-size:11px;cursor:pointer;font-family:sans-serif">リセット</button>'
+    +'<button onclick="exportQuizEdits()" style="padding:7px 10px;border-radius:8px;border:1px solid var(--sep);background:var(--sys-bg2);color:var(--lbl3);font-size:11px;cursor:pointer;font-family:sans-serif">📤 修正履歴('+getQuizEditCount()+')</button>'
     +'</div></div>';
 
   if(!weak.length){
@@ -5911,6 +6036,7 @@ function renderWrongPane(){
         +'</div>'
         +'<div style="font-size:12px;color:var(--lbl);line-height:1.5;margin-bottom:6px">'+esc(e.q)+'</div>'
         +'<div style="font-size:10px;color:var(--lbl2);margin-bottom:6px">正解: '+(e.ans?'○':'×')+'　'+esc(e.exp)+'</div>'
+        +'<button onclick="openQEditSheet('+e.no+')" style="font-size:11px;color:var(--lbl3);background:var(--sys-bg3);border:none;border-radius:6px;padding:4px 10px;margin-bottom:6px;cursor:pointer;font-family:sans-serif">✏️ 修正</button>'
         +'<div style="display:flex;align-items:center;gap:6px">'
         +'<div style="flex:1;height:4px;background:var(--sys-bg3);border-radius:2px;overflow:hidden">'
         +'<div style="width:'+barW+'%;height:100%;background:#FF453A;border-radius:2px"></div></div>'
@@ -7030,6 +7156,7 @@ function answerQuiz(userAns){
   html+='<div style="font-size:12px;font-weight:700;color:'+cc+';margin-bottom:5px">正解: '+(q.ans?'○（正しい）':'×（誤り）')+'</div>';
   html+='<div style="font-size:12px;color:var(--lbl);line-height:1.65">'+esc(q.exp)+'</div>';
   html+='</div>';
+  html+='<button onclick="openQEditSheet('+q.no+')" style="width:100%;padding:8px;margin-bottom:8px;background:var(--sys-bg3);color:var(--lbl3);border:none;border-radius:8px;font-size:12px;cursor:pointer;font-family:sans-serif">✏️ この問題を修正</button>';
   html+='<button onclick="nextQuiz()" style="width:100%;padding:13px;background:var(--blue);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:sans-serif">';
   html+=(quizIdx+1<quizQueue.length?'次の問題 →':'結果を見る')+'</button>';
   html+='</div>';
