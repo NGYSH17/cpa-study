@@ -1829,6 +1829,15 @@ input, textarea { -webkit-user-select: text; user-select: text; }
         <button class="btn2 btn2-secondary btn2-sm" onclick="addSubUnit()" style="white-space:nowrap">＋ 追加</button>
       </div>
     </div>
+    <!-- 単元統合 -->
+    <div class="fg2" id="merge-section" style="display:none">
+      <label class="fl2">この単元を統合</label>
+      <div style="display:flex;gap:6px;align-items:center">
+        <select class="fs2" id="merge-target-sel" style="flex:1"></select>
+        <button class="btn2 btn2-secondary btn2-sm" onclick="mergeUnitConfirm()" style="white-space:nowrap">統合実行</button>
+      </div>
+      <div style="font-size:11px;color:var(--lbl4);margin-top:4px">選択した単元にこの単元の学習記録・小区分・カードをすべて統合し、この単元は削除されます。</div>
+    </div>
     <div class="sheet2-btns">
       <button class="btn2 btn2-secondary" style="flex:1" onclick="closeUnit()">キャンセル</button>
       <button class="btn2 btn2-danger btn2-sm" id="unit-del-btn" style="display:none" onclick="deleteUnit()">削除</button>
@@ -3512,6 +3521,7 @@ function openUnitSheet(subjId){
   document.getElementById('unit-stage-sel').value='0';
   document.getElementById('unit-del-btn').style.display='none';
   document.getElementById('subunit-section').style.display='none';
+  document.getElementById('merge-section').style.display='none';
   document.getElementById('unit-ov').classList.add('open');
 }
 function openUnitEdit(id){
@@ -3524,7 +3534,69 @@ function openUnitEdit(id){
   document.getElementById('unit-del-btn').style.display='';
   document.getElementById('subunit-section').style.display='';
   renderSubUnitList();
+  renderMergeTargets();
   document.getElementById('unit-ov').classList.add('open');
+}
+
+/* ── 単元統合（重複単元の統合） ── */
+function renderMergeTargets(){
+  const sel=document.getElementById('merge-target-sel');
+  const section=document.getElementById('merge-section');
+  if(!sel||!section)return;
+  const u=units.find(x=>x.id==editingUnitId);
+  if(!u){section.style.display='none';return;}
+  const others=units.filter(function(x){return x.subjId===u.subjId&&x.id!=u.id;});
+  if(!others.length){section.style.display='none';return;}
+  section.style.display='';
+  sel.innerHTML=others.map(function(o){return '<option value="'+o.id+'">'+esc(o.name)+'</option>';}).join('');
+}
+function mergeUnitConfirm(){
+  const sel=document.getElementById('merge-target-sel');
+  if(!sel||!sel.value)return;
+  const targetId=sel.value;
+  const srcU=units.find(x=>x.id==editingUnitId);
+  const tgtU=units.find(x=>x.id==targetId);
+  if(!srcU||!tgtU)return;
+  if(!confirm('「'+srcU.name+'」を「'+tgtU.name+'」に統合します。この操作は元に戻せません。よろしいですか？'))return;
+  const srcName=srcU.name,tgtName=tgtU.name;
+  mergeUnits(srcU.id,tgtU.id);
+  closeUnit();renderUnits();updateNavBadge();refreshHome();populateSels();
+  if(document.getElementById('rv-pane-hist')&&document.getElementById('rv-pane-hist').style.display!=='none')renderRvHist();
+  toast('✅「'+srcName+'」を「'+tgtName+'」に統合しました');
+}
+function mergeUnits(srcId,tgtId){
+  const srcIdx=units.findIndex(x=>x.id==srcId);
+  const tgtIdx=units.findIndex(x=>x.id==tgtId);
+  if(srcIdx<0||tgtIdx<0)return;
+  const src=units[srcIdx],tgt=units[tgtIdx];
+  // 小区分IDの付け替え（衝突回避）とセッション/カードのsubUnitId付け替え準備
+  const idRemap={};
+  const srcSubs=(src.subUnits||[]).map(function(su){
+    const nid='su_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
+    idRemap[su.id]=nid;
+    return {...su,id:nid};
+  });
+  // 学習/演習セッションの単元付け替え
+  sess.forEach(function(s){
+    if(s.unitId==srcId){
+      s.unitId=tgtId;
+      if(s.subUnitId&&idRemap[s.subUnitId])s.subUnitId=idRemap[s.subUnitId];
+    }
+  });
+  // フラッシュカードの単元付け替え
+  cards.forEach(function(c){
+    if(c.unitId==srcId){
+      c.unitId=tgtId;
+      if(c.subUnitId&&idRemap[c.subUnitId])c.subUnitId=idRemap[c.subUnitId];
+    }
+  });
+  tgt.subUnits=[...(tgt.subUnits||[]),...srcSubs];
+  tgt.history=[...(tgt.history||[]),...(src.history||[])];
+  tgt.studyCount=(tgt.studyCount||0)+(src.studyCount||0);
+  if(src.lastStudied&&(!tgt.lastStudied||src.lastStudied>tgt.lastStudied))tgt.lastStudied=src.lastStudied;
+  if((src.stage||0)>(tgt.stage||0)){tgt.stage=src.stage;tgt.nextDate=src.nextDate;}
+  units.splice(srcIdx,1);
+  saveAll();
 }
 
 function renderSubUnitList(){
