@@ -2207,11 +2207,10 @@ function releaseWakeLock(){
   if(_noSleepVideo&&!_noSleepVideo.paused){_noSleepVideo.pause();}
 }
 function anyTimerRunning(){return tRun||probRun||pomoRun||!!_quizTimerIv;}
-function onTimerStart(){if(!anyTimerRunning())acquireWakeLock();}
+function onTimerStart(){acquireWakeLock();}
 function onTimerStop(){if(!anyTimerRunning())releaseWakeLock();}
 document.addEventListener('visibilitychange',function(){
   if(document.visibilityState==='visible'&&anyTimerRunning()&&!_wakeLock) acquireWakeLock();
-  if(document.visibilityState==='visible'&&pomoRun) _pomoCheck();
 });
 const POMO_WORK=25*60,POMO_REST=5*60,POMO_SETS=4;
 let logIO='input',editingId=null,editingUnitId=null,editingFCId=null;
@@ -2481,29 +2480,17 @@ function pomoToggle(){
     pomoStart=Date.now()-pomoSec*1000;pomoRun=true;onTimerStart();
     document.getElementById('pomo-start').textContent='⏸ 一時停止';
     document.getElementById('pomo-start').className='btn2 btn2-secondary';
-    _pomoStartInterval();
+    pomoIv=setInterval(()=>{
+      pomoSec=Math.floor((Date.now()-pomoStart)/1000);
+      const total=pomoPhase==='work'?POMO_WORK:POMO_REST;
+      const remain=Math.max(0,total-pomoSec);
+      document.getElementById('pomo-face').textContent=p2(Math.floor(remain/60))+':'+p2(remain%60);
+      if(pomoSec>=total){clearInterval(pomoIv);pomoRun=false;pomoTick();}
+    },1000);
   } else {
     clearInterval(pomoIv);pomoRun=false;onTimerStop();
     document.getElementById('pomo-start').textContent='▶ 再開';
     document.getElementById('pomo-start').className='btn2 btn2-primary';
-  }
-}
-function _pomoStartInterval(){
-  clearInterval(pomoIv);
-  pomoIv=setInterval(_pomoCheck,1000);
-  _pomoCheck();
-}
-function _pomoCheck(){
-  if(!pomoRun)return;
-  const total=pomoPhase==='work'?POMO_WORK:POMO_REST;
-  pomoSec=Math.floor((Date.now()-pomoStart)/1000);
-  const remain=Math.max(0,total-pomoSec);
-  const face=document.getElementById('pomo-face');
-  if(face)face.textContent=p2(Math.floor(remain/60))+':'+p2(remain%60);
-  if(pomoSec>=total){
-    clearInterval(pomoIv);
-    pomoRun=false;
-    if(pomoPhase==='work')pomoTick();else pomoTick2();
   }
 }
 function pomoTick(){
@@ -2515,7 +2502,7 @@ function pomoTick(){
     document.getElementById('pomo-phase').textContent='休憩タイム';document.getElementById('pomo-phase').className='pomo-phase rest';
     pomoSound('work');
     toast(`🍅 セット${pomoSet}完了！5分休憩`);
-    _pomoStartInterval();
+    pomoIv=setInterval(()=>{pomoSec=Math.floor((Date.now()-pomoStart)/1000);const remain=Math.max(0,POMO_REST-pomoSec);document.getElementById('pomo-face').textContent=p2(Math.floor(remain/60))+':'+p2(remain%60);if(pomoSec>=POMO_REST){clearInterval(pomoIv);pomoRun=false;pomoTick2();}},1000);
   }
 }
 function pomoTick2(){
@@ -2524,7 +2511,7 @@ function pomoTick2(){
   document.getElementById('pomo-count').textContent=`セット ${pomoSet} / ${POMO_SETS}`;
   pomoSound('rest');
   toast(`集中！セット${pomoSet}スタート`);
-  _pomoStartInterval();
+  pomoIv=setInterval(()=>{pomoSec=Math.floor((Date.now()-pomoStart)/1000);const remain=Math.max(0,POMO_WORK-pomoSec);document.getElementById('pomo-face').textContent=p2(Math.floor(remain/60))+':'+p2(remain%60);if(pomoSec>=POMO_WORK){clearInterval(pomoIv);pomoRun=false;pomoTick();}},1000);
 }
 function pomoSound(type){
   try{
