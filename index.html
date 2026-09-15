@@ -1844,8 +1844,9 @@ input, textarea { -webkit-user-select: text; user-select: text; }
   <div class="sheet2">
     <div class="sheet2-handle"></div>
     <div class="sheet2-title">今日のタスクを追加</div>
-    <div class="fg2"><label class="fl2">科目</label><select class="fs2" id="task-subj-sel"></select></div>
-    <div class="fg2"><label class="fl2">単元</label><input class="fi2" id="task-unit-inp" placeholder="例：第5章 復習"></div>
+    <div class="fg2"><label class="fl2">科目</label><select class="fs2" id="task-subj-sel" onchange="updateTaskUnitSel()"></select></div>
+    <div class="fg2"><label class="fl2">単元（登録済みから選択）</label><select class="fs2" id="task-unit-sel"></select></div>
+    <div class="fg2"><label class="fl2">または自由入力（単元未登録の場合）</label><input class="fi2" id="task-unit-inp" placeholder="例：第5章 復習"></div>
     <div class="sheet2-btns">
       <button class="btn2 btn2-secondary" style="flex:1" onclick="closeTaskSheet()">キャンセル</button>
       <button class="btn2 btn2-primary" style="flex:1" onclick="saveTask()">追加</button>
@@ -2319,18 +2320,34 @@ function openTaskSheet(){
   populateSels();
   document.getElementById('task-unit-inp').value='';
   document.getElementById('task-subj-sel').value='';
+  updateTaskUnitSel();
   document.getElementById('task-ov').classList.add('open');
+}
+function updateTaskUnitSel(){
+  const sel=document.getElementById('task-subj-sel');
+  const uel=document.getElementById('task-unit-sel');
+  if(!sel||!uel)return;
+  uel.innerHTML=unitOptsFor(sel.value);
 }
 function closeTaskSheet(){
   document.getElementById('task-ov').classList.remove('open');
 }
 function saveTask(){
   const subjId=document.getElementById('task-subj-sel').value;
+  const unitId=document.getElementById('task-unit-sel').value;
   const unitNm=document.getElementById('task-unit-inp').value.trim();
   if(!subjId){toast('⚠️ 科目を選択してください');return;}
-  if(!unitNm){toast('⚠️ 単元名を入力してください');return;}
+  if(!unitId&&!unitNm){toast('⚠️ 単元を選択するか、単元名を入力してください');return;}
   if(!cfg.tasks)cfg.tasks=[];
-  cfg.tasks.push({id:Date.now()+Math.random().toString(36).slice(2,7),date:ds(new Date()),subjId,unit:unitNm});
+  const task={id:Date.now()+Math.random().toString(36).slice(2,7),date:ds(new Date()),subjId};
+  if(unitId){
+    const u=units.find(x=>String(x.id)===String(unitId));
+    task.unitId=unitId;
+    task.unit=u?u.name:'';
+  } else {
+    task.unit=unitNm;
+  }
+  cfg.tasks.push(task);
   saveAll();
   closeTaskSheet();
   renderHomeTasks();
@@ -2455,11 +2472,16 @@ function renderHomeTasks(){
     const s=sub(t.subjId);
     const color=s?s.color:'var(--lbl3)';
     const sname=s?s.name:'不明';
-    return `<div style="margin:0 16px 8px;background:var(--sys-bg2);border-radius:var(--r-md);padding:12px 14px;display:flex;align-items:center;gap:10px">
-      <button onclick="completeTask('${t.id}')" style="flex-shrink:0;width:24px;height:24px;border-radius:50%;border:2px solid ${color};background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0"></button>
+    const hasUnit=!!t.unitId;
+    const cardCount=hasUnit?cards.filter(c=>String(c.unitId)===String(t.unitId)).length:0;
+    const clickable=hasUnit&&cardCount>0;
+    const rowClick=clickable?`onclick="startFCStudyByUnit('${t.unitId}')" style="cursor:pointer"`:'';
+    return `<div style="margin:0 16px 8px;background:var(--sys-bg2);border-radius:var(--r-md);padding:12px 14px;display:flex;align-items:center;gap:10px" ${rowClick}>
+      <button onclick="event.stopPropagation();completeTask('${t.id}')" style="flex-shrink:0;width:24px;height:24px;border-radius:50%;border:2px solid ${color};background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0"></button>
       <div style="flex:1;min-width:0">
         <span style="font-size:10px;font-weight:700;padding:1px 6px;border-radius:4px;background:${color}22;color:${color};margin-right:6px">${esc(sname)}</span>
         <span style="font-size:13px;font-weight:600;color:var(--lbl)">${esc(t.unit)}</span>
+        ${clickable?`<span style="font-size:10px;color:var(--blue);margin-left:6px">🗂️ カード${cardCount}枚 ›</span>`:''}
       </div>
     </div>`;
   }).join('');
@@ -2516,7 +2538,7 @@ function populateSels(){
   const opts=getSUBJS().map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
   ['log-subj','unit-subj-sel','fc-subj-sel','task-subj-sel'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML='<option value="">— 科目を選択 —</option>'+opts;});
   ['t-subj-sel','pomo-subj-sel','prob-subj-sel'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML='<option value="">— 科目 —</option>'+opts;});
-  updateLogUnitSel();updateTUnitSel();updatePomoUnitSel();updateProbUnitSel();
+  updateLogUnitSel();updateTUnitSel();updatePomoUnitSel();updateProbUnitSel();updateTaskUnitSel();
 }
 function unitOptsFor(subjId){
   const u=units.filter(x=>x.subjId===subjId);
